@@ -1,56 +1,67 @@
-bool lastInput = true;
-int rounds = 0;
 
-long lastSequence = 0;
+//speed tracking
+const int nBikes = 1;
+const int speedPin[2] = {7,8};
+const int lInputs = 3;
+
+long lastSequence[2] = {0,0};
 int tSequence = 500;
+bool lastInput[2] = {true,true};
+int inputs[2][3] = {{0,0,0},{0,0,0}};
+int index[2] = {0,0};
 
 
-int inputs[3] = {0,0,0};
-int index = 0;
-int lInputs = 3;
+void updateSpeed(int bike){
+   if(millis()-lastSequence[bike] > tSequence){
+    index[bike]++;
+    index[bike]%=lInputs;
+    inputs[bike][index[bike]] = 0;
+    lastSequence[bike] = millis();
+  }
+  // read the input on analog pin 0:
+  int sensorValue = digitalRead(speedPin[bike]);
+  
+  // print out the value you read:
+  if(sensorValue==0 && lastInput[bike] == true){
+    index[bike]++;
+    index[bike]%=lInputs;
+    inputs[bike][index[bike]] = millis()-lastSequence[bike];
+    lastSequence[bike] = millis();
+  }
+  lastInput[bike] = sensorValue;
+
+  
+}
 
 void setup() {
   // initialize serial communication at 9600 bits per second:
   Serial.begin(9600);
-  pinMode(8,INPUT_PULLUP);
+
+  //init bikes
+  for(int i=0; i<nBikes; ++i){
+    pinMode(speedPin[i],INPUT_PULLUP);
+  }
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
-  if(millis()-lastSequence > tSequence){
-    rounds++; 
-    index++;
-    index%=lInputs;
-    inputs[index] = 1000;
-    lastSequence = millis();
+  for(int i=0; i<nBikes;++i){
+    updateSpeed[i];
   }
-  // read the input on analog pin 0:
-  int sensorValue = digitalRead(8);
-  
-  // print out the value you read:
-  if(sensorValue==0 && lastInput == true){
-    rounds++; 
-    index++;
-    index%=lInputs;
-    inputs[index] = millis()-lastSequence;
-    lastSequence = millis();
-  }
-  lastInput = sensorValue;
 
-  float speed = 0;
-  for(int i=0;i<lInputs;++i){
-    speed += inputs[i];
+  float speed[2] = {0,0};
+  for(int s=0;s<2;++s){
+    for(int i=0;i<lInputs;++i){
+      speed[s] += inputs[s][i];
+    }
+    speed[s] /= (float)lInputs;
+    speed[2] = (1000.0/speed[s])-1;
   }
-  speed /= (float)lInputs;
-  speed = (1000.0/speed)-1;
 
-  Serial.print(speed);
-  Serial.print( " > ");
-  for(int i=0; i<lInputs; ++i){
-    Serial.print(" ");
-    Serial.print(inputs[i]);
-  }
+  Serial.print(speed[0]);
+  Serial.print( " > <");
+  Serial.print(speed[1]);
   Serial.println();
     
-  delay(10);        // delay in between reads for stability
+  delay(10);        
 }
