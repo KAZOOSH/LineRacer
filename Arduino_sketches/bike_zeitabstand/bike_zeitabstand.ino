@@ -1,6 +1,6 @@
 
 //speed tracking
-const int nBikes = 1;
+const int nBikes = 2;
 const int speedPin[2] = {7,8};
 const int lInputs = 3;
 
@@ -9,6 +9,7 @@ int tSequence = 500;
 bool lastInput[2] = {true,true};
 int inputs[2][3] = {{0,0,0},{0,0,0}};
 int index[2] = {0,0};
+float maxSpeed[2] = {0,0};
 
 
 void updateSpeed(int bike){
@@ -46,7 +47,7 @@ void setup() {
 // the loop routine runs over and over again forever:
 void loop() {
   for(int i=0; i<nBikes;++i){
-    updateSpeed[i];
+    updateSpeed(i);
   }
 
   float speed[2] = {0,0};
@@ -55,12 +56,16 @@ void loop() {
       speed[s] += inputs[s][i];
     }
     speed[s] /= (float)lInputs;
-    speed[2] = (1000.0/speed[s])-1;
+    speed[s] = (1000.0/speed[s])-1;
+    if(speed[s] > maxSpeed[s] && speed[s] < 10) maxSpeed[s] = speed[s];
   }
-
+  Serial.print(maxSpeed[0]);
+  Serial.print(" <- ");
   Serial.print(speed[0]);
-  Serial.print( " > <");
+  Serial.print( " > < ");
   Serial.print(speed[1]);
+  Serial.print(" -> ");
+  Serial.print(maxSpeed[1]);
   Serial.println();
     
   delay(10);        
