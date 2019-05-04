@@ -59,6 +59,7 @@ void setup()
 
 int lastDistFromCenter = 0;
 int lastLinePosition = 4;
+int lastMotorspeed = 0;
 
 int getLinePosition() {
   qtr.read(sensorValues);
@@ -94,16 +95,18 @@ void loop()
    int lineposition = getLinePosition();
    
    if(lineposition > -1) {
-     // if lineposition was detected ( > -1 ) set last position 
+     // if lineposition was detected ( > -1 ) set last position to rotate car until line is found again
      lastLinePosition = lineposition;
    }
    
    //int motorSpeed = KP * distFromCenter + KD * (distFromCenter - lastDistFromCenter);
-   int motorSpeed =  (int)(40 * (lastLinePosition -4));
+   int motorSpeed =  (int)(20 * (lastLinePosition -4));
 
 
-   // Todo: glätten der motorgeschwindigkeit, um schwingen zu mindern! 
-
+   //smoothing
+   int motorspeed = motorspeed * 1/3 + lastMotorspeed * 2/3;
+   lastMotorspeed = motorspeed;
+   
    //Serial.print("motorSpeed ");
    //Serial.println(motorSpeed);
    //Serial.print("player_speed ");
