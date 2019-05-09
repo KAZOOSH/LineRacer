@@ -7,6 +7,15 @@
 
 #include <RCSwitch.h>
 
+
+const int buttonPinUp = 4;
+const int buttonPinDown = 3;
+
+int buttonStateDown = 0;
+int buttonStateUp = 0; 
+
+int sendSpeed = 0;
+
 RCSwitch mySwitch = RCSwitch();
 
 void setup() {
@@ -15,7 +24,14 @@ void setup() {
   
   // Transmitter is connected to Arduino Pin #10  
   mySwitch.enableTransmit(10);
-  
+
+  //buttons
+   pinMode(buttonPinUp, INPUT_PULLUP);
+   pinMode(buttonPinDown, INPUT_PULLUP);
+
+
+   mySwitch.send(sendSpeed, 24);
+    
   // Optional set protocol (default is 1, will work for most outlets)
   // mySwitch.setProtocol(2);
 
@@ -29,15 +45,32 @@ void setup() {
 
 void loop() {
 
+  int buttonStateUpNew = digitalRead(buttonPinUp);
+  int buttonStateDownNew = digitalRead(buttonPinDown);
+
+
+  
+  if(buttonStateUpNew ==1 && buttonStateUp == 0) {
+   if(sendSpeed < 8) {
+    sendSpeed++;
+    mySwitch.send(sendSpeed, 24);
+    
+    Serial.println(sendSpeed);
+   }
+  }
+
+  if(buttonStateDownNew ==1 && buttonStateDown == 0) {
+   if(sendSpeed > 0) {
+    sendSpeed--;
+    mySwitch.send(sendSpeed, 24);
+    
+    
+    Serial.println(sendSpeed);
+   }
+  }
+  buttonStateDown = buttonStateDownNew;
+  buttonStateUp = buttonStateUpNew;
+
   /* Same switch as above, but using decimal code */
-  mySwitch.send(1, 24);
-  delay(1000);  
-  mySwitch.send(2, 24);
-  delay(1000);  
-  mySwitch.send(3, 24);
-  delay(1000);    
-  mySwitch.send(4, 24);
-  delay(1000);  
-  mySwitch.send(5, 24);
-  delay(5000);
+  delay(30);  
 }

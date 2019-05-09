@@ -3,6 +3,10 @@
 
 // include qtrSensors
 #include <QTRSensors.h>
+#include <RCSwitch.h>
+
+RCSwitch mySwitch = RCSwitch();
+
 
 // motor stuff ----------------------------------------------------
 
@@ -54,6 +58,10 @@ void setup()
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, NUM_SENSORS);
   setPlayerSpeed(5);
   delay(1500);
+ 
+  // 1 enspricht hier pin 3 !!!!! das muss noch umgelötet werden
+  mySwitch.enableReceive(1);
+   
   calibration();
 }
 
@@ -89,6 +97,17 @@ void setPlayerSpeed(int speedValueFromCycle){
 
 void loop()
 {
+  if (mySwitch.available()) {
+    
+    
+    Serial.println( mySwitch.getReceivedValue() );
+
+    setPlayerSpeed(mySwitch.getReceivedValue());
+    Serial.println( "playerspeed");
+    Serial.println( player_speed );
+     mySwitch.resetAvailable();
+  }
+  
    unsigned int sensors[NUM_SENSORS];
 
    // get lineposition with help of calibrated min max values
@@ -111,13 +130,20 @@ void loop()
    //Serial.println(motorSpeed);
    //Serial.print("player_speed ");
    //Serial.println(player_speed);
-   
+
+
+
    int leftMotorSpeed = player_speed + motorSpeed;
    int rightMotorSpeed = player_speed - motorSpeed;
 
-   
-   set_motors(leftMotorSpeed, rightMotorSpeed);
+   if(player_speed == 0) {
+    set_motors(0, 0);
+   }
+   else{
+    set_motors(leftMotorSpeed, rightMotorSpeed);
+   }
 }
+
 
 void set_motors(int motor1speed, int motor2speed){
   if(motor1speed <= 0) {
