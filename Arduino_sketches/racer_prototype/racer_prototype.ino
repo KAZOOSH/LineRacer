@@ -1,12 +1,12 @@
+// motor library
 #include <SparkFunTMP102.h>
 #include <SparkFun_TB6612.h>
 
-// include qtrSensors
+// include qtrSensors for ir sensor array
 #include <QTRSensors.h>
+
+// wireless library
 #include <RCSwitch.h>
-
-RCSwitch mySwitch = RCSwitch();
-
 
 // motor stuff ----------------------------------------------------
 
@@ -21,15 +21,26 @@ RCSwitch mySwitch = RCSwitch();
 #define PWMB 6
 #define STBY 9
 
+// qr sensor stuff -------------------------------------------
+#define MIDDLE_SENSOR 4       //number of middle sensor used
+#define NUM_SENSORS 8         //number of sensors used
+#define EMITTER_PIN 2
+unsigned int sensorValues[NUM_SENSORS];
+int lastDistFromCenter = 0;
+int lastLinePosition = 4;
+
+
 // these constants are used to allow you to make your motor configuration 
 // line up with function names like forward.  Value can be 1 or -1
 const int offsetA = 1;
 const int offsetB = 1;
 
-const int maximum_motor_speed = 255;
-
+// variable for player speed
 int player_speed = 0;
+int lastMotorspeed = 0;
 
+// maximum motor speed
+const int maximum_motor_speed = 255;
 // maxiumum base speed for racer (will be affected by speed of ergometer)
 int player_speed_max = 160;
 
@@ -39,18 +50,11 @@ int player_speed_max = 160;
 // call the function more than once.
 Motor motor1 = Motor(AIN1, AIN2, PWMA, offsetA, STBY);
 Motor motor2 = Motor(BIN1, BIN2, PWMB, offsetB, STBY);
-#define KP 2 //experiment to determine this, start by something small that just makes your bot follow the line at a slow speed
-#define KD 5 //experiment to determine this, slowly increase the speeds and adjust this value. ( Note: Kp < Kd) 
 
 
-// qr sensor stuff -------------------------------------------
-
-#define MIDDLE_SENSOR 4       //number of middle sensor used
-#define NUM_SENSORS 8         //number of sensors used
-#define EMITTER_PIN 2
-
+RCSwitch mySwitch = RCSwitch();
 QTRSensors qtr;
-unsigned int sensorValues[NUM_SENSORS];
+
 
 void setup()
 {
@@ -59,16 +63,15 @@ void setup()
   setPlayerSpeed(5);
   delay(1500);
  
-  // 1 enspricht hier pin 3 !!!!! das muss noch umgelötet werden
+  // must be interrupt pin (1 is pin3 on arduino nano)
   mySwitch.enableReceive(1);
-   
+
+  // start with calibration sequence
   calibration();
 }
 
-int lastDistFromCenter = 0;
-int lastLinePosition = 4;
-int lastMotorspeed = 0;
-
+// reads sensor bar and returns the sensor nearest to the line, if no line was detected return -1
+// use the brightness values resulting from calibration, use only values between 75 and 100% of the detected range
 int getLinePosition() {
   qtr.read(sensorValues);
   int maxvalue = 0;  
@@ -91,6 +94,7 @@ int getLinePosition() {
   return lineposition;
 }
 
+// sets the player speed, accept values between 0 and 8
 void setPlayerSpeed(int speedValueFromCycle){
   player_speed = (int)(((float)speedValueFromCycle / 8.0) * (float)player_speed_max);
 }
@@ -98,18 +102,14 @@ void setPlayerSpeed(int speedValueFromCycle){
 void loop()
 {
   if (mySwitch.available()) {
-    
-    
-    Serial.println( mySwitch.getReceivedValue() );
-
+   
+    //Serial.println( mySwitch.getReceivedValue() );
     setPlayerSpeed(mySwitch.getReceivedValue());
-    Serial.println( "playerspeed");
-    Serial.println( player_speed );
+    //Serial.println( "playerspeed");
+    //Serial.println( player_speed );
      mySwitch.resetAvailable();
   }
-  
-   unsigned int sensors[NUM_SENSORS];
-
+   
    // get lineposition with help of calibrated min max values
    int lineposition = getLinePosition();
    
@@ -121,7 +121,6 @@ void loop()
    //int motorSpeed = KP * distFromCenter + KD * (distFromCenter - lastDistFromCenter);
    int motorSpeed =  (int)(20 * (lastLinePosition -4));
 
-
    //smoothing
    int motorspeed = motorspeed * 1/3 + lastMotorspeed * 2/3;
    lastMotorspeed = motorspeed;
@@ -131,20 +130,15 @@ void loop()
    //Serial.print("player_speed ");
    //Serial.println(player_speed);
 
-
-
-   int leftMotorSpeed = player_speed + motorSpeed;
-   int rightMotorSpeed = player_speed - motorSpeed;
-
    if(player_speed == 0) {
     set_motors(0, 0);
    }
    else{
-    set_motors(leftMotorSpeed, rightMotorSpeed);
+    set_motors(player_speed + motorSpeed, player_speed - motorSpeed);
    }
 }
 
-
+// set speed for left or right motor
 void set_motors(int motor1speed, int motor2speed){
   if(motor1speed <= 0) {
       motor1.brake();
