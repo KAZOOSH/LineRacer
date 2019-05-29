@@ -1,10 +1,10 @@
 #include <RCSwitch.h>
 
 //rc
-RCSwitch mySwitch = RCSwitch();
+RCSwitch radio = RCSwitch();
 const int rcPin = 10;
-const int sendOption = 24;
-const int sendIntervall = 1000;
+const unsigned int sendLength = 8; // bits
+const int sendIntervall = 100;
 long lastSend = 0;
 
 //serial
@@ -24,7 +24,7 @@ int tMax = 1500;
 bool lastInput[2] = {true,true};
 int inputs[2][3] = {{tMax,tMax,tMax},{tMax,tMax,tMax}};
 unsigned int index[2] = {0,0};
-float speed[2] = {0,0};
+float speed[2] = {0.0,0.0};
 
 
 void updateSpeed(int bike){
@@ -36,7 +36,7 @@ void updateSpeed(int bike){
   }
   // read the input on analog pin 0:
   int sensorValue = digitalRead(speedPin[bike]);
-  
+
   // print out the value you read:
   if(sensorValue==0 && lastInput[bike] == true){
     index[bike]++;
@@ -59,46 +59,62 @@ void calculateSpeed(int bike){
   }
 }
 
+// 3 Bytes: <mode> <bike> <value>
 void evaluateSerialInput(){
+
+  unsigned char bike = serialBuffer[1];
+  unsigned char value = serialBuffer[2];
+
+  if ( bike == '0' ) { bike = 0; }
+  if ( bike == '1' ) { bike = 1; }
+
   switch(serialBuffer[0]){
     case 'm':{ //multiplicator
-      float m = (float)((int)serialBuffer[1])*0.00784;
-      if((int)serialBuffer[1] == 127) m = 1.0;
-      speedMult[(int)serialBuffer[1]] = m;
-      Serial.print("#mult ");
-      Serial.print((int)serialBuffer[1]);
+      float m = ((float)value)*0.00784;
+      if(value == 255) m = 1.0;
+      speedMult[bike] = m;
+      Serial.print("#mult bike:");
+      Serial.print((int)bike);
+      Serial.print(" value:");
+      Serial.print((int)value);
       Serial.print(" -> ");
       Serial.println(m);
       break;
     }
     case 's':{ //set speed
-      float s = (float)((int)serialBuffer[1])*0.03917647058;
-      speed[(int)serialBuffer[1]] = s;
-      Serial.print("#speed ");
-      Serial.print((int)serialBuffer[1]);
+      float s = ((float)value)*0.03917647058;
+      speed[bike] = s;
+      Serial.print("#speed bike:");
+      Serial.print((int)bike);
+      Serial.print(" value:");
+      Serial.print((int)value);
       Serial.print(" -> ");
       Serial.println(s);
       break;
     }
     case 'e':{ //enable fixed speed
-      fixedSpeed[(int)serialBuffer[1]] = (bool)serialBuffer[2];
+      fixedSpeed[bike] = (bool)value;
       Serial.print("#fixedSpeed ");
-      Serial.print((int)serialBuffer[1]);
+      Serial.print((int)value);
       Serial.print(" -> ");
-      Serial.println((bool)serialBuffer[2]);
+      Serial.println((bool)value);
       break;
     }
   }
 }
 
 void rcSendSpeed(){
-  mySwitch.send((int)speed[0]*2, sendOption);
+  radio.send((unsigned long)speed[0]*2, sendLength);
+  Serial.print("sent value: ");
+  Serial.println((unsigned long)speed[0]*2);
 }
 
 
 void setup() {
   Serial.begin(9600);
-  mySwitch.enableTransmit(rcPin);
+  radio.setPulseLength(200);
+  radio.setRepeatTransmit(2);
+  radio.enableTransmit(rcPin);
 
   //init bikes
   for(int i=0; i<nBikes; ++i){
@@ -114,28 +130,31 @@ void loop() {
   {
     Serial.readBytes(serialBuffer, 3);
     evaluateSerialInput();
-  } 
-
+  }
+/*
   //update bikes
   for(int i=0; i<nBikes;++i){
     updateSpeed(i);
     calculateSpeed(i);
   }
-
+*/
   if(lastSend - millis() > sendIntervall){
-    Serial.println("send");
-    Serial.print("s");
-  dtostrf(speed[0], 3, 2, buf);
+    Serial.print("send: s0=");
+  /*dtostrf(speed[0], 3, 2, buf);
   Serial.print(buf);
   dtostrf(speed[1], 3, 2, buf);
-  Serial.println(buf);
+  Serial.println(buf);*/
+    Serial.print( speed[0] );
+    Serial.print( " s1=" );
+    Serial.print( speed[1] );
+    Serial.println();
     rcSendSpeed();
     lastSend = millis();
   }
-  
+
 
   //serial output speed
   //
 
- // delay(10);        
+ // delay(10);
 }
