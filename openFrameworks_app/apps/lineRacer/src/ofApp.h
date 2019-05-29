@@ -46,6 +46,7 @@ class ofApp : public ofBaseApp{
 		void onFinish();
 		void onReset();
 		void onStart();
+		void onInterim();
 
 		void shotPicture(BikeControl& player);
 		
@@ -61,6 +62,7 @@ private:
 	BikeControl bike2;
 
 	int maxTurns = 3;
+	long lastInterim = 0;
 
 	map<string,ofxPs3Eye> cams;
 
@@ -70,4 +72,11 @@ private:
 
 	ofTrueTypeFont fState;
 	ofTrueTypeFont fInfo;
+
+	ofFbo fboCam1;
+	ofFbo fboCam2;
+	ofFbo fboInterim;
+
+	ofTexture picInterim;
+
 };
