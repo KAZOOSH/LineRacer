@@ -1,0 +1,8 @@
+[
+	{
+		"name":"Power Bar",
+		"icon":"img/powerBar.png",
+		"runTime":7000,
+		"speedMultiplicator":0.3
+	}
+]
