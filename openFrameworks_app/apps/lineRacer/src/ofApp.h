@@ -62,7 +62,8 @@ private:
 
 	int maxTurns = 3;
 
-	map<string,ofxPs3Eye> cams;
+	map<string,ofxPs3Eye> camsPlayer;
+	ofVideoGrabber camFinish;
 
 	ofJson settings;
 	ofJson effectConfig;
@@ -70,4 +71,6 @@ private:
 
 	ofTrueTypeFont fState;
 	ofTrueTypeFont fInfo;
+
+	
 };

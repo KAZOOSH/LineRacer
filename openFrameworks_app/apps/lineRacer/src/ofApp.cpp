@@ -15,44 +15,52 @@ void ofApp::setup(){
 
 	//init cams
 	if (devices.size() > settings["cams"]["player1"]["id"].get<int>()) {
-		cams.insert(pair<string, ofxPs3Eye>("player1", ofxPs3Eye()));
-		cams["player1"].setup(settings["cams"]["player1"]["id"]);
+		camsPlayer.insert(pair<string, ofxPs3Eye>("player1", ofxPs3Eye()));
+		camsPlayer["player1"].setup(settings["cams"]["player1"]["id"]);
 	}
 	if (devices.size() > settings["cams"]["player2"]["id"].get<int>()) {
-		cams.insert(pair<string, ofxPs3Eye>("player2", ofxPs3Eye()));
-		cams["player2"].setup(settings["cams"]["player2"]["id"]);
+		camsPlayer.insert(pair<string, ofxPs3Eye>("player2", ofxPs3Eye()));
+		camsPlayer["player2"].setup(settings["cams"]["player2"]["id"]);
 	}
 	if (devices.size() > settings["cams"]["finish"]["id"].get<int>()) {
-		cams.insert(pair<string, ofxPs3Eye>("finish", ofxPs3Eye()));
-		cams["finish"].setup(settings["cams"]["finish"]["id"]);
+		camFinish.setDeviceID(settings["cams"]["finish"]["id"]);
+		camFinish.setDesiredFrameRate(60);
+		camFinish.initGrabber(settings["cams"]["finish"]["dimension"][0], settings["cams"]["finish"]["dimension"][1]);
 	}
 
 	//start capturing
 	ofxPs3Eye::start();
 	
 	fState.load("fonts/TitilliumWeb-Bold.ttf", 80);
+
+	
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	for (auto& cam:cams)
+	for (auto& cam:camsPlayer)
 	{
 		cam.second.update();
 	}
 
 	bike1.update();
 	bike2.update();
+
+	camFinish.update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
 	ofBackground(0);
-	for (auto& cam : cams)
+	for (auto& cam : camsPlayer)
 	{
 		auto info = settings["cams"][cam.first];
 		cam.second.getTexture().draw(info["pos"][0].get<int>(), info["pos"][1].get<int>(), info["dimension"][0].get<int>(), info["dimension"][1].get<int>());
 		ofDrawBitmapStringHighlight(cam.first, info["pos"][0].get<int>() + 10, info["pos"][1].get<int>() + 20);
 	}
+	auto info = settings["cams"]["finish"];
+	camFinish.draw(info["pos"][0], info["pos"][1], info["dimension"][0], info["dimension"][1]);
+
 
 	bike1.draw();
 	bike2.draw();
@@ -62,6 +70,7 @@ void ofApp::draw(){
 	ofSetColor(255);
 	fState.drawString(stateToString(currentState), 20, 80);
 
+	
 }
 
 void ofApp::initSerial()
@@ -118,7 +127,7 @@ void ofApp::exit()
 
 void ofApp::drawBigScreen()
 {
-	if (cams.size() >= 3) {
+	if (camsPlayer.size() >= 3) {
 		ofPushMatrix();
 		switch (currentState) {
 		case IDLE:
