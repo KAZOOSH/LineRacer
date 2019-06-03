@@ -16,17 +16,26 @@ void ofApp::setup(){
 	//init cams
 	if (devices.size() > settings["cams"]["player1"]["id"].get<int>()) {
 		camsPlayer.insert(pair<string, ofxPs3Eye>("player1", ofxPs3Eye()));
-		camsPlayer["player1"].setup(settings["cams"]["player1"]["id"]);
+		camsPlayer["player1"].setup(settings["cams"]["player1"]["id"],640,480,30);
 	}
 	if (devices.size() > settings["cams"]["player2"]["id"].get<int>()) {
 		camsPlayer.insert(pair<string, ofxPs3Eye>("player2", ofxPs3Eye()));
-		camsPlayer["player2"].setup(settings["cams"]["player2"]["id"]);
+		camsPlayer["player2"].setup(settings["cams"]["player2"]["id"], 640, 480, 30);
 	}
 	if (devices.size() > settings["cams"]["finish"]["id"].get<int>()) {
-		camFinish.setDeviceID(settings["cams"]["finish"]["id"]);
-		camFinish.setDesiredFrameRate(60);
-		camFinish.initGrabber(settings["cams"]["finish"]["dimension"][0], settings["cams"]["finish"]["dimension"][1]);
+		camsPlayer.insert(pair<string, ofxPs3Eye>("finish", ofxPs3Eye()));
+		camsPlayer["finish"].setup(settings["cams"]["finish"]["id"], 640, 480, 30);
 	}
+
+	//gui
+	gui.setup();
+	bStart.addListener(this, &ofApp::onStart);
+	gui.add(bStart.setup("Start"));
+	bFinish.addListener(this, &ofApp::onFinish);
+	gui.add(bFinish.setup("Finish"));
+	bReset.addListener(this, &ofApp::onReset);
+	gui.add(bReset.setup("Reset"));
+	gui.setPosition(settings["cams"]["finish"]["pos"][0], 600);
 
 	//start capturing
 	ofxPs3Eye::start();
@@ -37,6 +46,9 @@ void ofApp::setup(){
 	fboCam1.allocate(settings["bigScreen"]["dimension"][0].get<int>() / 2, settings["bigScreen"]["dimension"][1]);
 	fboCam2.allocate(settings["bigScreen"]["dimension"][0].get<int>() / 2, settings["bigScreen"]["dimension"][1]);
 	fboInterim.allocate(settings["bigScreen"]["dimension"][0].get<int>(), settings["bigScreen"]["dimension"][1]);
+
+	ofSetWindowPosition(0, 0);
+	ofSetWindowShape(1920 * 2, 1080);
 }
 
 //--------------------------------------------------------------
@@ -49,7 +61,7 @@ void ofApp::update(){
 	bike1.update();
 	bike2.update();
 
-	camFinish.update();
+	updateState();
 }
 
 //--------------------------------------------------------------
@@ -62,7 +74,7 @@ void ofApp::draw(){
 		ofDrawBitmapStringHighlight(cam.first, info["pos"][0].get<int>() + 10, info["pos"][1].get<int>() + 20);
 	}
 	auto info = settings["cams"]["finish"];
-	camFinish.draw(info["pos"][0], info["pos"][1], info["dimension"][0], info["dimension"][1]);
+	//camFinish.draw(info["pos"][0], info["pos"][1], info["dimension"][0], info["dimension"][1]);
 
 
 	bike1.draw();
@@ -72,6 +84,8 @@ void ofApp::draw(){
 	ofDrawRectangle(0, 0, 300, 100);
 	ofSetColor(255);
 	fState.drawString(stateToString(currentState), 20, 80);
+
+	gui.draw();
 
 	drawBigScreen();
 }
@@ -145,37 +159,73 @@ void ofApp::drawBigScreen()
 		ofTranslate(pos);
 		switch (currentState) {
 		case IDLE:
+		{
+			if (camsPlayer.find("player1") != camsPlayer.end()) {
+				fboCam1.begin();
+				camsPlayer["player1"].getTexture().draw(camSource);
+				fboCam1.end();
+				fboCam1.draw(0, 0);
+			}
+			if (camsPlayer.find("player2") != camsPlayer.end()) {
+				fboCam2.begin();
+				camsPlayer["player2"].getTexture().draw(camSource);
+				fboCam2.end();
+				fboCam2.draw(dim.x / 2, 0);
+			}
+			break;
+		}
+		case WAIT: {
+			if (camsPlayer.find("finish") != camsPlayer.end()) {
+				camsPlayer["finish"].getTexture().draw(finishSource);
+			}
+			string countdown = ofToString((4100 -(ofGetElapsedTimeMillis() - lastStateChange)) / 1000);
+			fState.drawString(countdown, 0.5*(dim.x - fInfo.getStringBoundingBox(countdown, 0, 0).width), dim.y*0.5);
+			break;
+		}
+		case RACE:
+		{
 			if (ofGetElapsedTimeMillis() - lastInterim < 4000) {
-				if (cams.find("finish") != cams.end()) {
+				if (camsPlayer.find("finish") != camsPlayer.end()) {
 					fboInterim.begin();
-					cams["finish"].getTexture().draw(finishSource);
+					camsPlayer["finish"].getTexture().draw(finishSource);
 					fboInterim.end();
 					fboInterim.draw(0, 0);
 				}
 			}
 			else {
-				if (cams.find("player1") != cams.end()) {
+				if (camsPlayer.find("player1") != camsPlayer.end()) {
 					fboCam1.begin();
-					cams["player1"].getTexture().draw(camSource);
+					camsPlayer["player1"].getTexture().draw(camSource);
 					fboCam1.end();
 					fboCam1.draw(0, 0);
 				}
-				if (cams.find("player2") != cams.end()) {
+				if (camsPlayer.find("player2") != camsPlayer.end()) {
 					fboCam2.begin();
-					cams["player2"].getTexture().draw(camSource);
+					camsPlayer["player2"].getTexture().draw(camSource);
 					fboCam2.end();
 					fboCam2.draw(dim.x / 2, 0);
 				}
-				fInfo.drawString(ofToString(bike1.speed, 1), 30, dim.y - 80);
-				fInfo.drawString(ofToString(bike2.speed, 1), dim.x - 30 - fInfo.getStringBoundingBox(ofToString(bike2.speed, 1), 0, 0).width, dim.y - 80);
-			}
+				string textP1 = ofToString(ofMap(bike1.speed, 0, 10, 0, settings["bigScreen"]["vMax"]), 0) + "km/h";
+				string textP2 = ofToString(ofMap(bike2.speed, 0, 10, 0, settings["bigScreen"]["vMax"]), 0) + "km/h";
+				fInfo.drawString(textP1, 30, 100);
+				fInfo.drawString(textP2, dim.x - 30 - fInfo.getStringBoundingBox(textP2, 0, 0).width, 100);
 
-			
-			break;
-		case RACE:
-			//cams["player1"].getTexture().drawSubsection(ofRectangle(0,0,1920/2,1080),)
+				
+			}
+			string textI1 = getInterimString(0);
+			fInfo.drawString(textI1, 30, dim.y - 80 - fInfo.getStringBoundingBox(textI1, 0, 0).height);
+
+			string textI2 = getInterimString(1);
+			fInfo.drawString(textI2, dim.x - 30 - fInfo.getStringBoundingBox(textI2, 0, 0).width, dim.y - 80 - fInfo.getStringBoundingBox(textI1, 0, 0).height);
+
+		}
 			break;
 		case FINISH:
+			fboInterim.draw(0, 0);
+			string tWin = "Player ";
+			tWin += (winner == 0 ? "1" : "2");
+			tWin +=" wins";
+			fState.drawString(tWin, 0.5*(dim.x - fInfo.getStringBoundingBox(tWin, 0, 0).width), dim.y*0.5);
 			break;
 		ofPopMatrix();
 	}
@@ -207,7 +257,7 @@ void ofApp::keyPressed(int key){
 		bike1.setSpeed(6);
 		break;
 	case 'i':
-		onInterim();
+		onInterim(0);
 		break;
 	default:
 		break;
@@ -262,9 +312,33 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::setState(state s)
 {
 	currentState = s;
+	lastStateChange = ofGetElapsedTimeMillis();
 	switch (currentState)
 	{
 	case IDLE:
+		break;
+	case WAIT:
+		break;
+	case RACE:
+		bike1.start();
+		bike2.start();
+		break;
+	case FINISH:
+	default:
+		break;
+	}
+}
+
+void ofApp::updateState()
+{
+	switch (currentState)
+	{
+	case IDLE:
+		break;
+	case WAIT:
+		if (ofGetElapsedTimeMillis() - lastStateChange > 3100) {
+			setState(RACE);
+		}
 		break;
 	case RACE:
 		break;
@@ -301,24 +375,14 @@ void ofApp::onSerialError(const ofxIO::SerialBufferErrorEventArgs & args)
 
 void ofApp::onSerialFinish(const ofxIO::SerialBufferEventArgs & args)
 {
-	string msg = args.buffer().toString();
-	if (msg[0] == '0') {
-		bike1.addInterim(ofGetElapsedTimeMillis());
-		onInterim();
-		if (bike1.getInterims().size() == maxTurns) {
-			onFinish();
-			if (winner == -1) winner = 0;
+	
+		string msg = args.buffer().toString();
+		if (msg[0] == '0') {
+			onInterim(0);
 		}
-	}
-	else {
-		bike2.addInterim(ofGetElapsedTimeMillis());
-		onInterim();
-		if (bike2.getInterims().size() == maxTurns) {
-			onFinish();
-			if (winner == -1) winner = 2;
+		else {
+			onInterim(1);
 		}
-	}
-
 }
 
 void ofApp::onFinish()
@@ -336,18 +400,37 @@ void ofApp::onReset()
 
 void ofApp::onStart()
 {
-	if (currentState != IDLE)
+	if (currentState == IDLE)
 	{
-		bike1.start();
-		bike2.start();
-		setState(RACE);
+		
+		setState(WAIT);
 	}
 }
 
-void ofApp::onInterim()
+void ofApp::onInterim(int player)
 {
-	lastInterim = ofGetElapsedTimeMillis();
-	if (cams.find("finish") != cams.end()) picInterim = cams["finish"].getTexture();
+	if (currentState == RACE) {
+		if (player == 0) {
+			bike1.addInterim(ofGetElapsedTimeMillis());
+			if (bike1.getInterims().size() == maxTurns) {
+				onFinish();
+				if (winner == -1) winner = 0;
+			}
+		}
+		else {
+			bike2.addInterim(ofGetElapsedTimeMillis());
+			if (bike2.getInterims().size() == maxTurns) {
+				onFinish();
+				if (winner == -1) winner = 2;
+			}
+		}
+
+
+		lastInterim = ofGetElapsedTimeMillis();
+		if (camsPlayer.find("finish") != camsPlayer.end()) {
+			picInterim = camsPlayer["finish"].getTexture();
+		}
+	}
 }
 
 void ofApp::shotPicture(BikeControl & player)
@@ -360,9 +443,26 @@ string ofApp::stateToString(state s)
 	string ret;
 	switch (s)  {
 	case IDLE: return "IDLE";
+	case WAIT: return "WAIT";
 	case RACE: return "RACE";
 	case FINISH: return "FINISH";
 	}
+}
+
+string ofApp::getInterimString(int player)
+{
+	auto interims = player == 0 ? bike1.getInterims() : bike2.getInterims();
+	string r;
+	for (size_t i = 0; i < interims.size(); i++) {
+		r += "Round " + ofToString(i + 1) + "\t";
+		int t = interims[i] - lastStateChange;
+		int minutes = t / 1000 / 60;
+		int seconds = t % 60000 / 1000;
+		int millis = t % 1000 / 10;
+
+		r += ofToString(minutes) + ":" + (seconds < 10 ? "0":"") + ofToString(seconds) + "." + (millis < 10 ? "0" : "") + ofToString(millis) + "\n";
+	}
+	return r;
 }
 
 //--------------------------------------------------------------

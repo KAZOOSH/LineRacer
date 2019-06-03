@@ -11,18 +11,19 @@
 			"dimension":[640,480]
 		},
 		"finish":{
-			"id":0,
+			"id":2,
 			"pos":[1280,100],
 			"dimension":[640,480]
 		}
 	},
 	"bigScreen":{
 		"pos":[1920,0],
-		"dimension":[1920,1080]
+    "dimension": [ 1920, 1080 ],
+    "vMax": 50
 	},
-	"serial":{
-		"bike":"USB\\VID_2341&PID_8036&REV_0100&MI_00",
-		"finish":""
-	}
+  "serial": {
+    "bike": "USB\\VID_2341&PID_8036&REV_0100&MI_00",
+    "finish": ""
+  }
 
 }

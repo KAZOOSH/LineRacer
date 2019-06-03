@@ -4,9 +4,11 @@
 #include "ofxSerial.h"
 #include "BikeControl.h"
 #include "ofxPs3Eye.h"
+#include "ofxGui.h"
 
 enum state {
 	IDLE,
+	WAIT,
 	RACE,
 	FINISH
 };
@@ -37,6 +39,7 @@ class ofApp : public ofBaseApp{
 		void gotMessage(ofMessage msg);
 
 		void setState(state s);
+		void updateState();
 
 		void onSerialBuffer(const ofxIO::SerialBufferEventArgs& args);
 		void onSerialError(const ofxIO::SerialBufferErrorEventArgs& args);
@@ -46,14 +49,16 @@ class ofApp : public ofBaseApp{
 		void onFinish();
 		void onReset();
 		void onStart();
-		void onInterim();
+		void onInterim(int player);
 
 		void shotPicture(BikeControl& player);
 		
 		string stateToString(state s);
+		string getInterimString(int player);
 
 private:
 	state currentState = IDLE;
+	long lastStateChange = 0;
 
 	ofxIO::BufferedSerialDevice bike;
 	ofxIO::BufferedSerialDevice finish;
@@ -63,15 +68,26 @@ private:
 
 	int maxTurns = 3;
 	long lastInterim = 0;
+	int winner = -1;
 
 	map<string,ofxPs3Eye> camsPlayer;
-	ofVideoGrabber camFinish;
 
 	ofJson settings;
 	ofJson effectConfig;
-	int winner = 0;
 
+	//big screen
 	ofTrueTypeFont fState;
 	ofTrueTypeFont fInfo;
 	ofFbo fboCam1;
+	ofFbo fboCam2;
+	ofFbo fboInterim;
+	ofTexture picInterim;
+
+	//gui
+	ofxPanel gui;
+	ofxButton bStart;
+	ofxButton bFinish;
+	ofxButton bReset;
+
+	map<string, ofSoundPlayer>  sounds;
 };

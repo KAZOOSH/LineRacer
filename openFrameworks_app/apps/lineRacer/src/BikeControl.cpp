@@ -121,6 +121,7 @@ void BikeControl::clearInterims()
 	interims.clear();
 }
 
+
 int BikeControl::getTotalTime()
 {
 	return interims.back() - tStart;
