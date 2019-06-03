@@ -49,7 +49,12 @@ class ofApp : public ofBaseApp{
 		void onFinish();
 		void onReset();
 		void onStart();
+		void onPrintPlayer1();
+		void onPrintPlayer2();
 		void onInterim(int player);
+
+		void createFinishingFbo(int player);
+		void printFinishingImage(int player);
 
 		void shotPicture(BikeControl& player);
 		
@@ -80,6 +85,8 @@ private:
 	ofTrueTypeFont fInfo;
 	ofFbo fboCam1;
 	ofFbo fboCam2;
+	ofFbo fboPrint1;
+	ofFbo fboPrint2;
 	ofFbo fboInterim;
 	ofTexture picInterim;
 
@@ -88,6 +95,11 @@ private:
 	ofxButton bStart;
 	ofxButton bFinish;
 	ofxButton bReset;
+	ofxButton bPhoto1;
+	ofxButton bPhoto2;
 
 	map<string, ofSoundPlayer>  sounds;
+
+	//print
+	ofTrueTypeFont fPrint;
 };

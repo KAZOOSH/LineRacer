@@ -22,6 +22,7 @@ public:
 	ofParameter<float> speed;
 	ofParameter<float> multiplicator;
 	ofParameter<bool> isFixed;
+	ofParameter <string> name;
 
 
 	void setMultiplicator(float mult);
@@ -52,7 +53,7 @@ private:
 
 	vector<int> interims;
 	long tStart;
-	string name;
+	
 
 	vector<Effect> effects;
 	ofJson effectConfig;

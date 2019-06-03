@@ -35,6 +35,10 @@ void ofApp::setup(){
 	gui.add(bFinish.setup("Finish"));
 	bReset.addListener(this, &ofApp::onReset);
 	gui.add(bReset.setup("Reset"));
+	bPhoto1.addListener(this, &ofApp::onPrintPlayer1);
+	gui.add(bPhoto1.setup("print Photo Player 1"));
+	bPhoto2.addListener(this, &ofApp::onPrintPlayer2);
+	gui.add(bPhoto2.setup("print Photo Player 2"));
 	gui.setPosition(settings["cams"]["finish"]["pos"][0], 600);
 
 	//start capturing
@@ -42,10 +46,17 @@ void ofApp::setup(){
 	
 	fState.load("fonts/TitilliumWeb-Bold.ttf", 80);
 	fInfo.load("fonts/TitilliumWeb-Bold.ttf", 80);
+	fPrint.load("fonts/TitilliumWeb-Bold.ttf", 40);
 
 	fboCam1.allocate(settings["bigScreen"]["dimension"][0].get<int>() / 2, settings["bigScreen"]["dimension"][1]);
 	fboCam2.allocate(settings["bigScreen"]["dimension"][0].get<int>() / 2, settings["bigScreen"]["dimension"][1]);
 	fboInterim.allocate(settings["bigScreen"]["dimension"][0].get<int>(), settings["bigScreen"]["dimension"][1]);
+
+	float calc = 300.0f / 24.3f;
+	float w = 60 * calc;
+	float h = 75 * calc;
+	fboPrint1.allocate(w, h);
+	fboPrint2.allocate(w, h);
 
 	ofSetWindowPosition(0, 0);
 	ofSetWindowShape(1920 * 2, 1080);
@@ -312,7 +323,7 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::setState(state s)
 {
 	currentState = s;
-	lastStateChange = ofGetElapsedTimeMillis();
+	
 	switch (currentState)
 	{
 	case IDLE:
@@ -324,9 +335,16 @@ void ofApp::setState(state s)
 		bike2.start();
 		break;
 	case FINISH:
+		if (camsPlayer.find("player1") != camsPlayer.end()) {
+			createFinishingFbo(0);
+		}
+		if (camsPlayer.find("player2") != camsPlayer.end()) {
+			createFinishingFbo(1);
+		}
 	default:
 		break;
 	}
+	lastStateChange = ofGetElapsedTimeMillis();
 }
 
 void ofApp::updateState()
@@ -343,6 +361,8 @@ void ofApp::updateState()
 	case RACE:
 		break;
 	case FINISH:
+		
+
 	default:
 		break;
 	}
@@ -407,6 +427,16 @@ void ofApp::onStart()
 	}
 }
 
+void ofApp::onPrintPlayer1()
+{
+	printFinishingImage(0);
+}
+
+void ofApp::onPrintPlayer2()
+{
+	printFinishingImage(1);
+}
+
 void ofApp::onInterim(int player)
 {
 	if (currentState == RACE) {
@@ -431,6 +461,41 @@ void ofApp::onInterim(int player)
 			picInterim = camsPlayer["finish"].getTexture();
 		}
 	}
+}
+
+void ofApp::createFinishingFbo(int player)
+{
+	float calc = 300.0f / 24.3f;
+	float w = 60 * calc;
+	float h = 70 * calc;
+
+	ofRectangle finishDist = ofRectangle(50, 50, w - 100, (w - 100) * 480 / 640);
+
+	ofFbo* fbo = player == 0 ? &fboPrint1 : &fboPrint2;
+	fbo->begin();
+	ofClear(255,255);
+	auto pic = player == 0 ? camsPlayer["player1"].getTexture() : camsPlayer["player2"].getTexture();
+	pic.draw(finishDist);
+
+	ofSetColor(0);
+	ofPushMatrix();
+	ofTranslate(finishDist.x, finishDist.y + finishDist.height + 80);
+	string l0 = player == 0 ? bike1.name : bike2.name;
+	l0 += " won the race!";
+	fPrint.drawString(l0, 0, 0);
+	ofTranslate(0, 120);
+	fPrint.drawString(getInterimString(player), 0, 0);
+	ofPopMatrix();
+	fbo->end();
+}
+
+void ofApp::printFinishingImage(int player)
+{
+	ofImage img;
+	ofPixels px;
+	player == 0 ? fboPrint1.readToPixels(px) : fboPrint2.readToPixels(px);
+	img.setFromPixels(px);
+	img.save("print.png");
 }
 
 void ofApp::shotPicture(BikeControl & player)

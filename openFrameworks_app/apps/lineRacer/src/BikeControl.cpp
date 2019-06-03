@@ -4,6 +4,7 @@
 
 BikeControl::BikeControl()
 {
+	params.add(name.set("name"));
 	params.add(speedBase.set("base speed", 0.0,0.0,9.99));
 	params.add(multiplicatorBase.set("base speed multiplicator", 1.0, 0.0, 2.0));
 	params.add(isFixedBase.set("base fixed speed", false));
@@ -28,6 +29,7 @@ void BikeControl::setup(int id_, ofxIO::BufferedSerialDevice* serial_, ofVec2f p
 	serial = serial_;
 	gui.setPosition(posGui.x, posGui.y);
 	effectConfig = effectConfig_;
+	name = "Player" + ofToString(id + 1);
 }
 
 void BikeControl::update()
