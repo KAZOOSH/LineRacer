@@ -32,8 +32,11 @@ void ofApp::setup(){
 	ofxPs3Eye::start();
 	
 	fState.load("fonts/TitilliumWeb-Bold.ttf", 80);
+	fInfo.load("fonts/TitilliumWeb-Bold.ttf", 80);
 
-	
+	fboCam1.allocate(settings["bigScreen"]["dimension"][0].get<int>() / 2, settings["bigScreen"]["dimension"][1]);
+	fboCam2.allocate(settings["bigScreen"]["dimension"][0].get<int>() / 2, settings["bigScreen"]["dimension"][1]);
+	fboInterim.allocate(settings["bigScreen"]["dimension"][0].get<int>(), settings["bigScreen"]["dimension"][1]);
 }
 
 //--------------------------------------------------------------
@@ -70,7 +73,7 @@ void ofApp::draw(){
 	ofSetColor(255);
 	fState.drawString(stateToString(currentState), 20, 80);
 
-	
+	drawBigScreen();
 }
 
 void ofApp::initSerial()
@@ -127,17 +130,53 @@ void ofApp::exit()
 
 void ofApp::drawBigScreen()
 {
-	if (camsPlayer.size() >= 3) {
+	ofVec2f pos = ofVec2f(settings["bigScreen"]["pos"][0], settings["bigScreen"]["pos"][1]);
+	ofVec2f dim = ofVec2f(settings["bigScreen"]["dimension"][0], settings["bigScreen"]["dimension"][1]);
+
+	ofRectangle camSource= ofRectangle(0, 0, 640,480);
+	ofRectangle camDist = ofRectangle(0, 0, dim.x / 2, dim.y);
+	camSource.scaleTo(camDist, OF_SCALEMODE_FILL);
+
+	ofRectangle finishSource = ofRectangle(0, 0, 640, 480);
+	ofRectangle finishDist = ofRectangle(0, 0, dim.x, dim.y);
+	finishSource.scaleTo(finishDist, OF_SCALEMODE_FILL);
+
 		ofPushMatrix();
+		ofTranslate(pos);
 		switch (currentState) {
 		case IDLE:
+			if (ofGetElapsedTimeMillis() - lastInterim < 4000) {
+				if (cams.find("finish") != cams.end()) {
+					fboInterim.begin();
+					cams["finish"].getTexture().draw(finishSource);
+					fboInterim.end();
+					fboInterim.draw(0, 0);
+				}
+			}
+			else {
+				if (cams.find("player1") != cams.end()) {
+					fboCam1.begin();
+					cams["player1"].getTexture().draw(camSource);
+					fboCam1.end();
+					fboCam1.draw(0, 0);
+				}
+				if (cams.find("player2") != cams.end()) {
+					fboCam2.begin();
+					cams["player2"].getTexture().draw(camSource);
+					fboCam2.end();
+					fboCam2.draw(dim.x / 2, 0);
+				}
+				fInfo.drawString(ofToString(bike1.speed, 1), 30, dim.y - 80);
+				fInfo.drawString(ofToString(bike2.speed, 1), dim.x - 30 - fInfo.getStringBoundingBox(ofToString(bike2.speed, 1), 0, 0).width, dim.y - 80);
+			}
+
+			
 			break;
 		case RACE:
 			//cams["player1"].getTexture().drawSubsection(ofRectangle(0,0,1920/2,1080),)
 			break;
 		case FINISH:
 			break;
-		}
 		ofPopMatrix();
 	}
 }
@@ -166,6 +205,9 @@ void ofApp::keyPressed(int key){
 		break;
 	case '7':
 		bike1.setSpeed(6);
+		break;
+	case 'i':
+		onInterim();
 		break;
 	default:
 		break;
@@ -262,6 +304,7 @@ void ofApp::onSerialFinish(const ofxIO::SerialBufferEventArgs & args)
 	string msg = args.buffer().toString();
 	if (msg[0] == '0') {
 		bike1.addInterim(ofGetElapsedTimeMillis());
+		onInterim();
 		if (bike1.getInterims().size() == maxTurns) {
 			onFinish();
 			if (winner == -1) winner = 0;
@@ -269,6 +312,7 @@ void ofApp::onSerialFinish(const ofxIO::SerialBufferEventArgs & args)
 	}
 	else {
 		bike2.addInterim(ofGetElapsedTimeMillis());
+		onInterim();
 		if (bike2.getInterims().size() == maxTurns) {
 			onFinish();
 			if (winner == -1) winner = 2;
@@ -298,6 +342,12 @@ void ofApp::onStart()
 		bike2.start();
 		setState(RACE);
 	}
+}
+
+void ofApp::onInterim()
+{
+	lastInterim = ofGetElapsedTimeMillis();
+	if (cams.find("finish") != cams.end()) picInterim = cams["finish"].getTexture();
 }
 
 void ofApp::shotPicture(BikeControl & player)
