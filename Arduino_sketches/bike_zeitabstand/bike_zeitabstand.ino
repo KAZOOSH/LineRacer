@@ -106,32 +106,30 @@ void evaluateSerialInput(){
 void rcSendSpeed()
 {
   // translate speeds to 8-bit integers
-  //uint16_t speedInt1 = ( (uint8_t) round(speed[0]) ) & B01111111;
-  //uint16_t speedInt2 = ( (uint8_t) round(speed[1]) ) & B01111111;
+ // uint16_t speedInt1 = ( (uint8_t) round(speed[0]) ) & B01111111;
+ // uint16_t speedInt2 = ( (uint8_t) round(speed[1]) ) & B01111111;
  //uint16_t speedInt1 = ( (uint8_t) (10) ) & B01111111;
  //uint16_t speedInt2 = ( (uint8_t) (33) ) & B01111111;
 
   // codeword = speed1 | speed2
   //uint16_t codeword = ( speedInt1 << 8 ) | speedInt2;
-  //radio.send( codeword, 16 );
+  //radio.send( codeword, sizeof(codeword) );
+  uint8_t speed1 = (speed[0]*128)/10;
+  uint8_t speed2 = (speed[0]*128)/10;
+  Serial1.print(speed1);
+  Serial1.println(speed2);
 
-  //Serial.print("sent value: ");
-  //Serial.println( codeword );
-
-  uint8_t speed1 = speed[0]*12.8;
-  uint8_t speed2 = speed[1]*12.8;
-  Serial1.print( speed1 );
-  Serial1.println( speed2 );
+  Serial.print(speed1);
+  Serial.println(speed2);
 }
 
 
 void setup() {
   Serial.begin(9600);
-  radio.setProtocol(5);
-  //radio.setRepeatTransmit(3);
-  radio.enableTransmit(rcPin);
-
   Serial1.begin(9600);
+  radio.setProtocol(5);
+  radio.setRepeatTransmit(3);
+  radio.enableTransmit(rcPin);
 
   //init bikes
   for(int i=0; i<nBikes; ++i){
@@ -143,6 +141,7 @@ void setup() {
 void loop() {
 
   //serial input
+  
   while (Serial.available() > 0)
   {
     Serial.readBytes(serialBuffer, 3);
@@ -156,13 +155,15 @@ void loop() {
   }
 
   if(lastSend - millis() > sendIntervalMillis){
-    digitalWrite( 13, LOW );
-    Serial.print("send s0:");
-    Serial.print( speed[0] );
-    Serial.print( " s1:" );
-    Serial.print( speed[1] );
-    Serial.println();
     rcSendSpeed();
+    
+    digitalWrite( 13, LOW );
+    Serial.print("s");
+    Serial.print( speed[0],3 );
+    //Serial.print( " s1:" );
+    Serial.print( speed[1],3 );
+    Serial.println();
+    
     lastSend = millis();
     digitalWrite( 13, HIGH );
   }
