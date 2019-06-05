@@ -1,0 +1,29 @@
+{
+	"cams":{
+		"player1":{
+			"id":0,
+			"pos":[0,100],
+			"dimension":[640,480]
+		},
+		"player2":{
+			"id":1,
+			"pos":[640,100],
+			"dimension":[640,480]
+		},
+		"finish":{
+			"id":2,
+			"pos":[1280,100],
+			"dimension":[640,480]
+		}
+	},
+	"bigScreen":{
+		"pos":[1920,0],
+    "dimension": [ 1920, 1080 ],
+    "vMax": 50
+	},
+  "serial": {
+    "bike": "USB\\VID_2341&PID_8036&REV_0100&MI_00",
+    "finish": ""
+  }
+
+}
