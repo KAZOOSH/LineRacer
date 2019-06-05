@@ -58,7 +58,7 @@ void ofApp::setup(){
 	fboPrint1.allocate(w, h);
 	fboPrint2.allocate(w, h);
 
-	ofSetWindowPosition(0, 0);
+	//ofSetWindowPosition(0, 0);
 	ofSetWindowShape(1920 * 2, 1080);
 }
 
