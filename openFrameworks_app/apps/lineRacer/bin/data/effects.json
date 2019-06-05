@@ -1,8 +1,14 @@
 [
-	{
-		"name":"Power Bar",
-		"icon":"img/powerBar.png",
-		"runTime":7000,
-		"speedMultiplicator":0.3
-	}
+  {
+    "name": "Power Bar",
+    "icon": "img/powerBar.png",
+    "runTime": 7000,
+    "speedMultiplicator": 0.3
+  },
+  {
+    "name": "Freeze",
+    "icon": "img/freeze.png",
+    "runTime": 2000,
+    "fixedSpeed": 0
+  }
 ]
