@@ -101,7 +101,8 @@ int getLinePosition() {
 
 // sets the player speed, accept values between 0 and 8
 void setPlayerSpeed(int speedValueFromCycle){
-  player_speed = (int)(((float)speedValueFromCycle / 8.0) * (float)player_speed_max);
+  player_speed = (int)(((float)speedValueFromCycle / 127.0) * (float)player_speed_max);
+  Serial.print(player_speed); Serial.print(" / ");Serial.println(player_speed_max);
 }
 
 void loop()
@@ -109,11 +110,14 @@ void loop()
   if (radio.available())
   {
     uint16_t codeword = radio.getReceivedValue();
-    uint8_t speedInt1 = (uint8_t) codeword >> 8;
+    uint8_t speedInt1 = (uint16_t) codeword >> 8;
     uint8_t speedInt2 = (uint8_t) codeword;
 
-    Serial.print("speedInt1:"); Serial.print( speedInt1 );
-    Serial.print("speedInt2:"); Serial.println( speedInt2 );
+    speedInt1 -= 1;
+    speedInt2 -= 1;
+
+    //Serial.print("speedInt1:"); Serial.print( speedInt1 );
+    //Serial.print("speedInt2:"); Serial.println( speedInt2 );
 
     setPlayerSpeed( BIKE_INDEX == 1 ? speedInt1 : speedInt2 );
     radio.resetAvailable();
@@ -149,6 +153,7 @@ void loop()
 
 // set speed for left or right motor
 void set_motors(int motor1speed, int motor2speed){
+  //Serial.print(motor1speed);Serial.print(" ");Serial.print(motor2speed);Serial.print(" / ");Serial.println(maximum_motor_speed);
   if(motor1speed <= 0) {
       motor1.brake();
     } else{

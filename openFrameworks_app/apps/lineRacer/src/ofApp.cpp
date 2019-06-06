@@ -114,7 +114,7 @@ void ofApp::initSerial()
 
 			if (deviceDescriptor.getHardwareId() == settings["serial"]["bike"]) {
 				// Connect to the first matching device.
-				bool success = bike.setup(deviceDescriptor, 9200);
+				bool success = bike.setup(deviceDescriptor, 9600);
 
 				if (success)
 				{
@@ -127,7 +127,7 @@ void ofApp::initSerial()
 				}
 			}else if (deviceDescriptor.getHardwareId() == settings["serial"]["finish"]) {
 				// Connect to the first matching device.
-				bool success = finish.setup(deviceDescriptor, 9200);
+				bool success = finish.setup(deviceDescriptor, 9600);
 
 				if (success)
 				{
@@ -371,16 +371,11 @@ void ofApp::updateState()
 void ofApp::onSerialBuffer(const ofxIO::SerialBufferEventArgs & args)
 {
 	string msg = args.buffer().toString();
-
+	
 	switch (msg[0]) {
 	case 's': { //speed
 		bike1.speedBase = ofToFloat(msg.substr(1, 4));
 		bike2.speedBase = ofToFloat(msg.substr(5, 4));
-		break;
-	}
-	case 'e': { //event
-		//bike1.speed = ofToFloat(msg.substr(1, 4));
-		//bike2.speed = ofToFloat(msg.substr(5, 4));
 		break;
 	}
 	default:

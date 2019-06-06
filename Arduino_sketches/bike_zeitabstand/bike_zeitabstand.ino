@@ -4,7 +4,7 @@
 RCSwitch radio = RCSwitch();
 const int rcPin = 10;
 const unsigned int sendLength = 32; // bits
-const int sendIntervalMillis = 250;
+const int sendIntervalMillis = 1000;
 long lastSend = 0;
 
 //serial
@@ -18,6 +18,7 @@ const int speedPin[2] = {7,8};
 const int lInputs = 3;
 char buf[10];
 
+char rcBuf[2];
 long lastSequence[2] = {0,0};
 int tSequence = 500;
 int tMax = 1500;
@@ -55,8 +56,9 @@ void calculateSpeed(int bike){
     }
     speed[bike] /= (float)lInputs;
     speed[bike] = (1000.0/speed[bike])-1;
+    speed[bike]*=speedMult[bike];
     if (speed[bike] < 0) speed[bike] = 0;
-  }
+}
 }
 
 // 3 Bytes: <mode> <bike> <value>
@@ -108,19 +110,21 @@ void rcSendSpeed()
   // translate speeds to 8-bit integers
  // uint16_t speedInt1 = ( (uint8_t) round(speed[0]) ) & B01111111;
  // uint16_t speedInt2 = ( (uint8_t) round(speed[1]) ) & B01111111;
- //uint16_t speedInt1 = ( (uint8_t) (10) ) & B01111111;
- //uint16_t speedInt2 = ( (uint8_t) (33) ) & B01111111;
+// uint16_t speedInt1 = ( (uint8_t) (10) ) & B01111111;
+// uint16_t speedInt2 = ( (uint8_t) (33) ) & B01111111;
 
   // codeword = speed1 | speed2
-  //uint16_t codeword = ( speedInt1 << 8 ) | speedInt2;
+ // uint16_t codeword = ( speedInt1 << 8 ) | speedInt2;
   //radio.send( codeword, sizeof(codeword) );
-  uint8_t speed1 = (speed[0]*128)/10;
-  uint8_t speed2 = (speed[0]*128)/10;
-  Serial1.print(speed1);
-  Serial1.println(speed2);
-
-  Serial.print(speed1);
-  Serial.println(speed2);
+  //uint8_t speed1 = (speed[0]*128)/10;
+  //uint8_t speed2 = (speed[0]*128)/10;
+  //Serial1.print(speed1);
+  rcBuf[0] = (speed[0]*127)/10+1;
+  rcBuf[1] = (speed[1]*127)/10+1 +128;
+ // Serial.print(rcBuf[0],DEC);
+ // Serial.println(rcBuf[1],DEC);
+  Serial1.write(rcBuf[0]);
+  Serial1.write(rcBuf[1]);
 }
 
 
@@ -146,6 +150,8 @@ void loop() {
   {
     Serial.readBytes(serialBuffer, 3);
     evaluateSerialInput();
+    lastSequence[0] = millis();
+    lastSequence[1] = millis();
   }
 
   //update bikes
@@ -154,7 +160,16 @@ void loop() {
     calculateSpeed(i);
   }
 
-  if(lastSend - millis() > sendIntervalMillis){
+ /* while (Serial1.available() > 0)
+  {
+    int r = Serial1.read();
+    if(r!= 0){ 
+      rcSendSpeed();
+      //Serial.println(r);
+    }
+  }*/
+
+  if(millis() - lastSend > sendIntervalMillis){
     rcSendSpeed();
     
     digitalWrite( 13, LOW );

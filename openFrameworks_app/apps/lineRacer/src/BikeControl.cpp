@@ -13,7 +13,7 @@ BikeControl::BikeControl()
 	params.add(isFixed.set("fixed speed", false));
 	gui.setup(params);
 
-	
+	//isFixed.addListener(this, &BikeControl::onFixedSpeed);
 	bPowerBar.addListener(this, &BikeControl::onEPowerBar);
 	gui.add(bPowerBar.setup("Power Bar"));
 }
@@ -34,6 +34,11 @@ void BikeControl::setup(int id_, ofxIO::BufferedSerialDevice* serial_, ofVec2f p
 
 void BikeControl::update()
 {
+	auto speedOld = speed.get();
+	auto multiplicatorOld = multiplicator.get();
+	bool isFixedOld = isFixed.get();
+	
+
 	speed = speedBase.get();
 	multiplicator = multiplicatorBase.get();
 	isFixed = isFixedBase.get();
@@ -52,6 +57,11 @@ void BikeControl::update()
 	for (int i = 0; i < toDel.size(); ++i) {
 		effects.erase(effects.begin() + toDel[i]);
 	}
+
+	//write to Serial
+	if (speedOld != speed && isFixed.get()) setSpeed(speed);
+	if (multiplicatorOld != multiplicator) setMultiplicator(multiplicator);
+	if (isFixedOld != isFixed.get()) setFixedSpeed(isFixed);
 }
 
 void BikeControl::draw()
@@ -61,7 +71,7 @@ void BikeControl::draw()
 	ofTranslate(gui.getPosition().x + gui.getWidth() + 20, gui.getPosition().y + 15);
 	for (auto& e : effects) {
 		ofDrawBitmapString(e.name + "  " + e.getRuntimeString(), 20, 0);
-		e.icon.draw(0, 0, 16, 16);
+		//e.icon.draw(0, 0, 16, 16);
 		ofTranslate(0, 18);
 	}
 	ofPopMatrix();
@@ -69,8 +79,10 @@ void BikeControl::draw()
 
 void BikeControl::setMultiplicator(float mult)
 {
-	int val = ofMap(mult, 0, 2, 0, 255, true);
+	int val = ofMap(mult, 0, 2, 0, 254, true);
 	
+	if (mult == 1.0) val = 255;
+
 	std::string text = "m";
 	text += id;
 	text += char(val);
@@ -152,6 +164,11 @@ void BikeControl::start()
 void BikeControl::addEffect(string name)
 {
 	effects.push_back(Effectory::getEffect(name, effectConfig));
+}
+
+void BikeControl::onFixedSpeed(bool & isFixed)
+{
+	setFixedSpeed(isFixed);
 }
 
 void BikeControl::onEPowerBar()

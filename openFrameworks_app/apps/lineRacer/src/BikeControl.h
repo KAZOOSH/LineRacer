@@ -44,6 +44,7 @@ public:
 	ofImage picture;
 
 	//effects
+	void onFixedSpeed(bool & isFixed);
 	void onEPowerBar();
 
 private:
