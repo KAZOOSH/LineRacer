@@ -1,14 +1,92 @@
 [
   {
     "name": "Power Bar",
-    "icon": "img/powerBar.png",
+    "icon": "img/icons8-schokoriegel-filled-50.png",
     "runTime": 7000,
-    "speedMultiplicator": 1.0
+    "speedMultiplicator": 0.3
   },
   {
-    "name": "Freeze",
+    "name": "Banane",
+    "icon": "img/icons8-banane-filled-50.png",
+    "runTime": 7000,
+    "speedMultiplicator": -0.3
+  },
+  {
+    "name": "Seifenbalsen",
     "icon": "img/freeze.png",
     "runTime": 2000,
     "fixedSpeed": 0
+  },
+  {
+    "name": "Anglerhut",
+    "icon": "img/icons8-17473-0-73681-sommer-hut-kleidung-60.png",
+    "runTime": 0,
+    "speedMultiplicator": -0.1
+  },
+  {
+    "name": "Fahrradhelm",
+    "icon": "img/icons8-kletterhelm-filled-50.png",
+    "runTime": 0,
+    "speedMultiplicator": 0.1
+  },
+  {
+    "name": "Skibrille",
+    "icon": "img/icons8-skibrille-128.png",
+    "runTime": 0,
+    "speedMultiplicator": 0.1
+  },
+  {
+    "name": "Brille",
+    "icon": "img/icons8-brille-64.png",
+    "runTime": 0,
+    "speedMultiplicator": -0.1
+  },
+  {
+    "name": "Warnweste",
+    "icon": "img/icons8-sicherheitsweste-60.png",
+    "runTime": 0,
+    "speedMultiplicator": -0.1
+  },
+  {
+    "name": "Lederjacke",
+    "icon": "img/icons8-feuerwehrmannmantel-filled-50.png",
+    "runTime": 0,
+    "speedMultiplicator": 0.1
+  },
+  {
+    "name": "Greifer",
+    "icon": "img/icons8-geballte-faust-52.png",
+    "runTime": 0,
+    "speedMultiplicator": 0.1
+  },
+  {
+    "name": "Spazierstock",
+    "icon": "img/icons8-gehstock-filled-50.png",
+    "runTime": 0,
+    "speedMultiplicator": -0.1
+  },
+  {
+    "name": "Radlerhose",
+    "icon": "img/icons8-lange-shorts-60.png",
+    "runTime": 0,
+    "speedMultiplicator": 0.1
+  },
+  {
+    "name": "Jogginghose",
+    "icon": "img/icons8-hose-filled-50.png",
+    "runTime": 0,
+    "speedMultiplicator": -0.1
+  },
+  {
+    "name": "Turnschuhe",
+    "icon": "img/icons8-turnschuhe-filled-50.png",
+    "runTime": 0,
+    "speedMultiplicator": -0.1
+  },
+  {
+    "name": "Sandalen",
+    "icon": "img/icons8-flip-flops-filled-50.png",
+    "runTime": 0,
+    "speedMultiplicator": -0.1
   }
 ]

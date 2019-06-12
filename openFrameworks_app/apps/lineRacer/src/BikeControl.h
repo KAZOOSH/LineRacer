@@ -40,6 +40,7 @@ public:
 	void start();
 
 	void addEffect(string name);
+	vector<Effect> getEffects();
 
 	ofImage picture;
 

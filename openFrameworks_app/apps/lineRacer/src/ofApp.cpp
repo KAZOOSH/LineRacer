@@ -221,7 +221,24 @@ void ofApp::drawBigScreen()
 				fInfo.drawString(textP1, 30, 100);
 				fInfo.drawString(textP2, dim.x - 30 - fInfo.getStringBoundingBox(textP2, 0, 0).width, 100);
 
-				
+				ofPushMatrix();
+				ofTranslate(0, 300);
+				ofPushMatrix();
+				ofTranslate(50, 0);
+				for (auto& e : bike1.getEffects()) {
+					e.icon.draw(0, 0, 64, 64);
+					fInfo.drawString(e.getRuntimeString(), 74, 64);
+					ofTranslate(0, 74);
+				}
+				ofPopMatrix();
+				ofTranslate(970, 0);
+				for (auto& e : bike2.getEffects()) {
+					e.icon.draw(0, 0, 64, 64);
+					fInfo.drawString(e.getRuntimeString(), 74, 64);
+					ofTranslate(0, 74);
+				}
+				ofPopMatrix();
+				ofPopMatrix();
 			}
 			string textI1 = getInterimString(0);
 			fInfo.drawString(textI1, 30, dim.y - 80 - fInfo.getStringBoundingBox(textI1, 0, 0).height);

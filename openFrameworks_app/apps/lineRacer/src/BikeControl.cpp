@@ -70,8 +70,10 @@ void BikeControl::draw()
 	ofPushMatrix();
 	ofTranslate(gui.getPosition().x + gui.getWidth() + 20, gui.getPosition().y + 15);
 	for (auto& e : effects) {
+		ofSetColor(255);
+		ofDrawRectangle(0, -12, 16, 16);
+		e.icon.draw(0, -12, 16, 16);
 		ofDrawBitmapString(e.name + "  " + e.getRuntimeString(), 20, 0);
-		//e.icon.draw(0, 0, 16, 16);
 		ofTranslate(0, 18);
 	}
 	ofPopMatrix();
@@ -164,6 +166,11 @@ void BikeControl::start()
 void BikeControl::addEffect(string name)
 {
 	effects.push_back(Effectory::getEffect(name, effectConfig));
+}
+
+vector<Effect> BikeControl::getEffects()
+{
+	return effects;
 }
 
 void BikeControl::onFixedSpeed(bool & isFixed)

@@ -79,23 +79,36 @@ void setup()
 // use the brightness values resulting from calibration, use only values between 75 and 100% of the detected range
 int getLinePosition() {
   qtr.read(sensorValues);
-  int maxvalue = 0;
+  //int maxvalue = 0;
+  int minvalue = 9999;
   int lineposition = -1;
 
   // loop sensor values, use values in upper third of min-max range for position
   for (uint8_t i = 0; i < NUM_SENSORS; i++)
   {
-    if(sensorValues[i] > (qtr.calibrationOn.minimum[i] + (qtr.calibrationOn.maximum[i] - qtr.calibrationOn.minimum[i]) * 3/4)){
+//    if(sensorValues[i] > (qtr.calibrationOn.minimum[i] + (qtr.calibrationOn.maximum[i] - qtr.calibrationOn.minimum[i]) * 3/4)){
+//      //Serial.print(i);
+//      //Serial.print('\t');
+//      if(sensorValues[i] > maxvalue) {
+//        lineposition = i;
+//        maxvalue = sensorValues[i];
+//      }
+//
+//    }
+    if(sensorValues[i] < (qtr.calibrationOn.minimum[i] + (qtr.calibrationOn.maximum[i] - qtr.calibrationOn.minimum[i]) * 1/4)){
       //Serial.print(i);
       //Serial.print('\t');
-      if(sensorValues[i] > maxvalue) {
+      if(sensorValues[i] < minvalue) {
         lineposition = i;
-        maxvalue = sensorValues[i];
+        minvalue = sensorValues[i];
       }
 
     }
+    
     //Serial.println(' ');
   }
+  Serial.print('lineposition');
+  Serial.println(lineposition);
   return lineposition;
 }
 
