@@ -1,9 +1,5 @@
-#include <RCSwitch.h>
 
 //rc
-RCSwitch radio = RCSwitch();
-const int rcPin = 10;
-const unsigned int sendLength = 32; // bits
 const int sendIntervalMillis = 1000;
 long lastSend = 0;
 
@@ -131,9 +127,6 @@ void rcSendSpeed()
 void setup() {
   Serial.begin(9600);
   Serial1.begin(9600);
-  radio.setProtocol(5);
-  radio.setRepeatTransmit(3);
-  radio.enableTransmit(rcPin);
 
   //init bikes
   for(int i=0; i<nBikes; ++i){
@@ -169,7 +162,8 @@ void loop() {
     }
   }*/
 
-  if(millis() - lastSend > sendIntervalMillis){
+  // if time to send or if got clear-to-send from sender
+  if( millis() - lastSend > sendIntervalMillis || Serial1.read() == 'K' ){
     rcSendSpeed();
     
     digitalWrite( 13, LOW );
