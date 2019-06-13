@@ -12,10 +12,11 @@
     "speedMultiplicator": -0.3
   },
   {
-    "name": "Seifenbalsen",
-    "icon": "img/freeze.png",
+    "name": "Klebepfeil",
+    "icon": "img/icons8-push-pin-60.png",
     "runTime": 2000,
-    "fixedSpeed": 0
+    "speed": 0,
+    "fixedSpeed": true
   },
   {
     "name": "Anglerhut",
@@ -88,5 +89,11 @@
     "icon": "img/icons8-flip-flops-filled-50.png",
     "runTime": 0,
     "speedMultiplicator": -0.1
+  },
+  {
+    "name": "Superman",
+    "icon": "img/icons8-superman-filled-50.png",
+    "runTime": 0,
+    "speedMultiplicator": 0.0
   }
 ]

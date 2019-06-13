@@ -255,8 +255,8 @@ void ofApp::drawBigScreen()
 			tWin +=" wins";
 			fState.drawString(tWin, 0.5*(dim.x - fInfo.getStringBoundingBox(tWin, 0, 0).width), dim.y*0.5);
 			break;
-		ofPopMatrix();
 	}
+		ofPopMatrix();
 }
 
 //--------------------------------------------------------------
