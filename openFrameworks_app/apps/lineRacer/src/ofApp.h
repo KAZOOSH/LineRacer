@@ -13,6 +13,18 @@ enum state {
 	FINISH
 };
 
+class PlayerStats {
+public:
+	PlayerStats(ofJson json);
+	PlayerStats(const BikeControl& b,string img);
+	string name;
+	string img;
+	long timestamp;
+	vector<int> interims;
+
+	ofJson toJson();
+};
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -61,6 +73,8 @@ class ofApp : public ofBaseApp{
 		string stateToString(state s);
 		string getInterimString(int player);
 
+		void backupStats();
+
 private:
 	state currentState = IDLE;
 	long lastStateChange = 0;
@@ -102,4 +116,6 @@ private:
 
 	//print
 	ofTrueTypeFont fPrint;
+
+	vector<PlayerStats> stats;
 };
