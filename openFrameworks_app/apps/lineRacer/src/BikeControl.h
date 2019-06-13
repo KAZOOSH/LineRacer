@@ -47,6 +47,21 @@ public:
 	//effects
 	void onFixedSpeed(bool & isFixed);
 	void onEPowerBar();
+	void onEBanane();
+	void onEKlebePfeil();
+	void onEAnglerhut();
+	void onEFahrradhelm();
+	void onESkibrille();
+	void onEBrille();
+	void onEWarnweste();
+	void onELederjacke();
+	void onEGreifer();
+	void onESpazierstock();
+	void onERadlerhose();
+	void onEJogginghose();
+	void onETurnschuhe();
+	void onESandalen();
+	void onESuperman();
 
 private:
 	ofxIO::BufferedSerialDevice* serial;
@@ -62,5 +77,20 @@ private:
 
 	// gui
 	ofxButton bPowerBar;
+	ofxButton bBanane;
+	ofxButton bKlebepfeil;
+	ofxButton bAnglerhut;
+	ofxButton bFahrradhelm;
+	ofxButton bSkibrille;
+	ofxButton bBrille;
+	ofxButton bWarnweste;
+	ofxButton bLederjacke;
+	ofxButton bGreifer;
+	ofxButton bSpazierstock;
+	ofxButton bRadlerhose;
+	ofxButton bJogginghose;
+	ofxButton bTurnschuhe;
+	ofxButton bSandalen;
+	ofxButton bSuperman;
 };
 

@@ -7,6 +7,11 @@ void ofApp::setup(){
 	ofLogToConsole();
 	initSerial();
 
+	ofJson sj = ofLoadJson("stats.json");
+	for (auto& s : sj) {
+		stats.push_back(PlayerStats(s));
+	}
+
 	bike1.setup(0,&bike,ofVec2f(settings["cams"]["player1"]["pos"][0], settings["cams"]["player1"]["pos"][1] + 500), effectConfig);
 	bike2.setup(1,&bike, ofVec2f(settings["cams"]["player2"]["pos"][0], settings["cams"]["player2"]["pos"][1] + 500), effectConfig);
 
@@ -255,8 +260,8 @@ void ofApp::drawBigScreen()
 			tWin +=" wins";
 			fState.drawString(tWin, 0.5*(dim.x - fInfo.getStringBoundingBox(tWin, 0, 0).width), dim.y*0.5);
 			break;
-		ofPopMatrix();
 	}
+		ofPopMatrix();
 }
 
 //--------------------------------------------------------------
@@ -351,13 +356,29 @@ void ofApp::setState(state s)
 		bike1.start();
 		bike2.start();
 		break;
-	case FINISH:
+	case FINISH: {
 		if (camsPlayer.find("player1") != camsPlayer.end()) {
 			createFinishingFbo(0);
 		}
 		if (camsPlayer.find("player2") != camsPlayer.end()) {
 			createFinishingFbo(1);
 		}
+		ofPixels p;
+		ofImage img;
+		string path = "stats/" + ofGetTimestampString() + ".png";
+		if (winner == 0) {
+			stats.push_back(PlayerStats(bike1, path));
+			fboCam1.readToPixels(p);
+		}
+		else {
+			stats.push_back(PlayerStats(bike2, path));
+			fboCam1.readToPixels(p);
+		}
+		img.setFromPixels(p);
+		img.save(path);
+		backupStats();
+		break;
+	}
 	default:
 		break;
 	}
@@ -463,7 +484,7 @@ void ofApp::onInterim(int player)
 			bike2.addInterim(ofGetElapsedTimeMillis());
 			if (bike2.getInterims().size() == maxTurns) {
 				onFinish();
-				if (winner == -1) winner = 2;
+				if (winner == -1) winner = 1;
 			}
 		}
 
@@ -542,7 +563,49 @@ string ofApp::getInterimString(int player)
 	return r;
 }
 
+void ofApp::backupStats()
+{
+	ofJson js;
+	for (auto& s : stats){
+		js.push_back(s.toJson());
+	}
+	ofSaveJson("stats.json", js);
+}
+
 //--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo){ 
 
+}
+
+PlayerStats::PlayerStats(ofJson json)
+{
+	name = json["name"].get<string>();
+	img = json["img"].get<string>();
+	timestamp = json["timestamp"].get<long>();
+	for (auto& i : json["interims"]) {
+		interims.push_back(i.get<int>());
+	}
+}
+
+PlayerStats::PlayerStats(const BikeControl & b,string img_)
+{
+	name = b.name;
+	img = img_;
+	timestamp = ofGetUnixTime();
+
+}
+
+ofJson PlayerStats::toJson()
+{
+	ofJson ret;
+	ret["name"] = name;
+	ret["img"] = img;
+	ret["timestamp"] = timestamp;
+	ofJson times;
+	for (auto& v : interims) {
+		times.push_back(v);
+	}
+	ret["interims"] = times;
+
+	return ret;
 }
