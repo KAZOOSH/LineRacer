@@ -13,6 +13,10 @@
 const char BIKE_INDEX = 1;
 
 
+const unsigned long serialBaudRate = 115200;
+const bool checkPacketIntegrity = false;
+
+
 // motor stuff ----------------------------------------------------
 
 // Pins for all inputs, keep in mind the PWM defines must be on PWM pins
@@ -45,9 +49,10 @@ int player_speed = 0;
 int lastMotorspeed = 0;
 
 // maximum motor speed
-const int maximum_motor_speed = 255;
+const int maximum_motor_speed = 200;//255;
 // maxiumum base speed for racer (will be affected by speed of ergometer)
 int player_speed_max = 160;
+const int max_player_speed_change = 40;
 
 // Initializing motors.  The library will allow you to initialize as many
 // motors as you have memory for.  If you are using functions like forward
@@ -86,6 +91,8 @@ int getLinePosition() {
   // loop sensor values, use values in upper third of min-max range for position
   for (uint8_t i = 0; i < NUM_SENSORS; i++)
   {
+
+// code for black line on white ground    
 //    if(sensorValues[i] > (qtr.calibrationOn.minimum[i] + (qtr.calibrationOn.maximum[i] - qtr.calibrationOn.minimum[i]) * 3/4)){
 //      //Serial.print(i);
 //      //Serial.print('\t');
@@ -95,7 +102,8 @@ int getLinePosition() {
 //      }
 //
 //    }
-    if(sensorValues[i] < (qtr.calibrationOn.minimum[i] + (qtr.calibrationOn.maximum[i] - qtr.calibrationOn.minimum[i]) * 1/4)){
+
+    if(sensorValues[i] < (qtr.calibrationOn.minimum[i] + (qtr.calibrationOn.maximum[i] - qtr.calibrationOn.minimum[i]) * 1/2)){
       //Serial.print(i);
       //Serial.print('\t');
       if(sensorValues[i] < minvalue) {
@@ -107,32 +115,61 @@ int getLinePosition() {
     
     //Serial.println(' ');
   }
-  Serial.print('lineposition');
-  Serial.println(lineposition);
+  //Serial.print('lineposition');
+  //Serial.println(lineposition);
   return lineposition;
 }
 
 // sets the player speed, accept values between 0 and 8
 void setPlayerSpeed(int speedValueFromCycle){
+  static int old_speed = 0;
   player_speed = (int)(((float)speedValueFromCycle / 127.0) * (float)player_speed_max);
+  if ( player_speed > old_speed )
+  {
+    if ( player_speed - old_speed > max_player_speed_change )
+    {
+      player_speed = old_speed + max_player_speed_change;
+    }
+  }
+  old_speed = player_speed;
   Serial.print(player_speed); Serial.print(" / ");Serial.println(player_speed_max);
+}
+
+int countOnes( uint16_t codeword )
+{
+  int numberOfOnes = 0;
+  for ( int i = 0; i < 16; i++ ) { numberOfOnes += bitRead( codeword, i ); }
+  return numberOfOnes;
 }
 
 void loop()
 {
+  static uint8_t lastSpeedInt1 = 0;
+  static uint8_t lastSpeedInt2 = 0;
+  
   if (radio.available())
   {
     uint16_t codeword = radio.getReceivedValue();
-    uint8_t speedInt1 = (uint16_t) codeword >> 8;
-    uint8_t speedInt2 = (uint8_t) codeword;
 
-    speedInt1 -= 1;
-    speedInt2 -= 1;
-
-    //Serial.print("speedInt1:"); Serial.print( speedInt1 );
-    //Serial.print("speedInt2:"); Serial.println( speedInt2 );
-
-    setPlayerSpeed( BIKE_INDEX == 1 ? speedInt1 : speedInt2 );
+    // check if duplicate parity bits are equal
+    if ( !checkPacketIntegrity || bitRead( codeword, 15 ) == bitRead( codeword, 7 ) )
+    {
+      // check for even parity (discarding duplicate parity bit)
+      if ( !checkPacketIntegrity || countOnes( bitClear( codeword, 15 ) ) % 2 == 0 )
+      {
+        uint8_t speedInt1 = (uint16_t) codeword >> 8;
+        uint8_t speedInt2 = (uint8_t) codeword;
+    
+        if ( speedInt1 > 0 ) { speedInt1 -= 1; }
+        if ( speedInt2 > 0 ) { speedInt2 -= 1; }
+    
+        //Serial.print("speedInt1:"); Serial.print( speedInt1 );
+        //Serial.print("speedInt2:"); Serial.println( speedInt2 );
+    
+        setPlayerSpeed( BIKE_INDEX == 1 ? speedInt1 : speedInt2 );
+      }
+    }
+    
     radio.resetAvailable();
   }
 
@@ -193,7 +230,7 @@ void calibration(){
   digitalWrite(LED_BUILTIN, LOW);
 
   // print the calibration minimum values measured when emitters were on
-  Serial.begin(9600);
+  Serial.begin(serialBaudRate);
   for (uint8_t i = 0; i < NUM_SENSORS; i++)
   {
     Serial.print(qtr.calibrationOn.minimum[i]);
