@@ -14,6 +14,7 @@ const char BIKE_INDEX = 1;
 
 
 const unsigned long serialBaudRate = 115200;
+const bool checkPacketIntegrity = false;
 
 
 // motor stuff ----------------------------------------------------
@@ -48,7 +49,7 @@ int player_speed = 0;
 int lastMotorspeed = 0;
 
 // maximum motor speed
-const int maximum_motor_speed = 255;
+const int maximum_motor_speed = 200;//255;
 // maxiumum base speed for racer (will be affected by speed of ergometer)
 int player_speed_max = 160;
 const int max_player_speed_change = 40;
@@ -151,10 +152,10 @@ void loop()
     uint16_t codeword = radio.getReceivedValue();
 
     // check if duplicate parity bits are equal
-    if ( bitRead( codeword, 15 ) == bitRead( codeword, 7 ) )
+    if ( !checkPacketIntegrity || bitRead( codeword, 15 ) == bitRead( codeword, 7 ) )
     {
       // check for even parity (discarding duplicate parity bit)
-      if ( countOnes( bitClear( codeword, 15 ) ) % 2 == 0 )
+      if ( !checkPacketIntegrity || countOnes( bitClear( codeword, 15 ) ) % 2 == 0 )
       {
         uint8_t speedInt1 = (uint16_t) codeword >> 8;
         uint8_t speedInt2 = (uint8_t) codeword;

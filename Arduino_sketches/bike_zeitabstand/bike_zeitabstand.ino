@@ -58,7 +58,7 @@ void calculateSpeed(int bike){
     if (speed[bike] > 0) speed[bike]+=1;
     if (speed[bike] < 0) speed[bike] = 0;
     if (speed[bike] > 10) speed[bike] = 10;
-   // 
+    //if(lastSpeed > speed[bike] + 2)speed[bike] = lastSpeed+2;
 }
 }
 
