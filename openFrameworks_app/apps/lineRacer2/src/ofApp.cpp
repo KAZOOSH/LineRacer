@@ -17,6 +17,9 @@ void ofApp::setup(){
 
 	// list out the devices
 	std::vector<PS3EYECam::PS3EYERef> devices(PS3EYECam::getDevices());
+	ofVideoGrabber grabber;
+	auto nPlayerCams = grabber.listDevices();
+
 
 	//init cams
 	if (devices.size() > settings["cams"]["player1"]["id"].get<int>()) {
@@ -31,6 +34,20 @@ void ofApp::setup(){
 		camsPlayer.insert(pair<string, ofxPs3Eye>("finish", ofxPs3Eye()));
 		camsPlayer["finish"].setup(settings["cams"]["finish"]["id"], 640, 480, 30);
 	}
+	if (nPlayerCams.size() > settings["cams"]["car1"]["id"].get<int>()) {
+		camsCar.insert(pair<string, ofVideoGrabber>("car1", ofVideoGrabber()));
+		camsCar["car1"].setDesiredFrameRate(30);
+		camsCar["car1"].setDeviceID(settings["cams"]["car1"]["id"]);
+		camsCar["car1"].setup(320, 240);
+	}
+
+	if (nPlayerCams.size() > settings["cams"]["car2"]["id"].get<int>()) {
+		camsCar.insert(pair<string, ofVideoGrabber>("car2", ofVideoGrabber()));
+		camsCar["car2"].setDesiredFrameRate(30);
+		camsCar["car2"].setDeviceID(settings["cams"]["car2"]["id"]);
+		camsCar["car2"].setup(320, 240);
+	}
+	
 
 	//gui
 	gui.setup();
@@ -73,12 +90,29 @@ void ofApp::setup(){
 	sounds["start"].load(settings["sound"]["start"].get<string>());
 	sounds.insert(pair<string, ofSoundPlayer>("finish", ofSoundPlayer()));
 	sounds["finish"].load(settings["sound"]["finish"].get<string>());
+
+	////init fbos
+	//int maxCams = 0;
+	//for (auto& config:settings["bigScreen"]["configs"]){
+	//	if (config.size() > 0) {
+	//		vector<ofFbo> fboConfig;
+	//		
+	//		for (auto& settings : config) {
+	//			
+	//		}
+	//	}
+	//}
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
 	ofSoundUpdate();
 	for (auto& cam:camsPlayer)
+	{
+		cam.second.update();
+	}
+
+	for (auto& cam : camsCar)
 	{
 		cam.second.update();
 	}
@@ -98,6 +132,14 @@ void ofApp::draw(){
 		cam.second.getTexture().draw(info["pos"][0].get<int>(), info["pos"][1].get<int>(), info["dimension"][0].get<int>(), info["dimension"][1].get<int>());
 		ofDrawBitmapStringHighlight(cam.first, info["pos"][0].get<int>() + 10, info["pos"][1].get<int>() + 20);
 	}
+
+	for (auto& cam : camsCar)
+	{
+		auto info = settings["cams"][cam.first];
+		cam.second.draw(info["pos"][0].get<int>(), info["pos"][1].get<int>(), info["dimension"][0].get<int>(), info["dimension"][1].get<int>());
+		ofDrawBitmapStringHighlight(cam.first, info["pos"][0].get<int>() + 10, info["pos"][1].get<int>() + 20);
+	}
+
 	auto info = settings["cams"]["finish"];
 	//camFinish.draw(info["pos"][0], info["pos"][1], info["dimension"][0], info["dimension"][1]);
 
@@ -272,6 +314,113 @@ void ofApp::drawBigScreen()
 			break;
 	}
 		ofPopMatrix();
+}
+
+void ofApp::drawBigScreen2()
+{
+	ofVec2f pos = ofVec2f(settings["bigScreen"]["pos"][0], settings["bigScreen"]["pos"][1]);
+	ofVec2f dim = ofVec2f(settings["bigScreen"]["dimension"][0], settings["bigScreen"]["dimension"][1]);
+
+	ofRectangle camSource = ofRectangle(0, 0, 640, 480);
+	ofRectangle camDist = ofRectangle(0, 0, dim.x / 2, dim.y);
+	camSource.scaleTo(camDist, OF_SCALEMODE_FILL);
+
+	ofRectangle finishSource = ofRectangle(0, 0, 640, 480);
+	ofRectangle finishDist = ofRectangle(0, 0, dim.x, dim.y);
+	finishSource.scaleTo(finishDist, OF_SCALEMODE_FILL);
+
+	ofPushMatrix();
+	ofTranslate(pos);
+	switch (currentState) {
+	case IDLE:
+	{
+		if (camsPlayer.find("player1") != camsPlayer.end()) {
+			fboCam1.begin();
+			camsPlayer["player1"].getTexture().draw(camSource);
+			fboCam1.end();
+			fboCam1.draw(0, 0);
+		}
+		if (camsPlayer.find("player2") != camsPlayer.end()) {
+			fboCam2.begin();
+			camsPlayer["player2"].getTexture().draw(camSource);
+			fboCam2.end();
+			fboCam2.draw(dim.x / 2, 0);
+		}
+		break;
+	}
+	case WAIT: {
+		if (camsPlayer.find("finish") != camsPlayer.end()) {
+			camsPlayer["finish"].getTexture().draw(finishSource);
+		}
+		string countdown = ofToString((4100 - (ofGetElapsedTimeMillis() - lastStateChange)) / 1000);
+		fSuperBig.drawString(countdown, 0.5*(dim.x - fSuperBig.getStringBoundingBox(countdown, 0, 0).width), dim.y*0.7);
+		break;
+	}
+	case RACE:
+	{
+		if (ofGetElapsedTimeMillis() - lastInterim < 4000) {
+			if (camsPlayer.find("finish") != camsPlayer.end()) {
+				fboInterim.begin();
+				camsPlayer["finish"].getTexture().draw(finishSource);
+				fboInterim.end();
+				fboInterim.draw(0, 0);
+			}
+		}
+		else {
+			if (camsPlayer.find("player1") != camsPlayer.end()) {
+				fboCam1.begin();
+				camsPlayer["player1"].getTexture().draw(camSource);
+				fboCam1.end();
+				fboCam1.draw(0, 0);
+			}
+			if (camsPlayer.find("player2") != camsPlayer.end()) {
+				fboCam2.begin();
+				camsPlayer["player2"].getTexture().draw(camSource);
+				fboCam2.end();
+				fboCam2.draw(dim.x / 2, 0);
+			}
+			string textP1 = ofToString(ofMap(bike1.speed, 0, 10, 0, settings["bigScreen"]["vMax"]), 0) + "km/h";
+			string textP2 = ofToString(ofMap(bike2.speed, 0, 10, 0, settings["bigScreen"]["vMax"]), 0) + "km/h";
+			fInfo.drawString(textP1, 30, 100);
+			fInfo.drawString(textP2, dim.x - 30 - fInfo.getStringBoundingBox(textP2, 0, 0).width, 100);
+
+			ofPushMatrix();
+			ofTranslate(0, 300);
+			ofPushMatrix();
+			ofTranslate(50, 0);
+			for (auto& e : bike1.getEffects()) {
+				e.icon.draw(0, 0, 64, 64);
+				fInfo.drawString(e.getRuntimeString(), 74, 64);
+				ofTranslate(0, 74);
+			}
+			ofPopMatrix();
+			ofTranslate(970, 0);
+			for (auto& e : bike2.getEffects()) {
+				e.icon.draw(0, 0, 64, 64);
+				fInfo.drawString(e.getRuntimeString(), 74, 64);
+				ofTranslate(0, 74);
+			}
+			ofPopMatrix();
+			ofPopMatrix();
+		}
+		string textI1 = getInterimString(0);
+		fInfo.drawString(textI1, 30, dim.y - 80 - fInfo.getStringBoundingBox(textI1, 0, 0).height);
+
+		string textI2 = getInterimString(1);
+		fInfo.drawString(textI2, dim.x - 30 - fInfo.getStringBoundingBox(textI2, 0, 0).width, dim.y - 80 - fInfo.getStringBoundingBox(textI1, 0, 0).height);
+
+	}
+	break;
+	case FINISH:
+
+		fboInterim.draw(0, 0);
+		string tWin = bike1.name;
+		if (winner == 1)tWin = bike2.name;
+		tWin += " gewinnt";
+		fBig.drawString(tWin, 0.5*(dim.x - fBig.getStringBoundingBox(tWin, 0, 0).width), dim.y*0.5);
+		break;
+	}
+	ofPopMatrix();
 }
 
 //--------------------------------------------------------------

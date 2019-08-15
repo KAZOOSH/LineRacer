@@ -11,12 +11,12 @@ bool fixedSpeed[2] = {false,false};
 //speed tracking
 const int nBikes = 2;
 const int speedPin[2] = {7,8};
-const int lInputs = 3;
+const int lInputs = 1;
 char buf[10];
 
 char rcBuf[2];
 long lastSequence[2] = {0,0};
-int tSequence = 500;
+int tSequence = 600;
 int tMax = 1500;
 bool lastInput[2] = {true,true};
 int inputs[2][3] = {{tMax,tMax,tMax},{tMax,tMax,tMax}};
@@ -46,6 +46,7 @@ void updateSpeed(int bike){
 
 void calculateSpeed(int bike){
   if(!fixedSpeed[bike]){
+    float lastSpeed = speed[bike];
     speed[bike] = 0;
     for(int i=0;i<lInputs;++i){
       speed[bike] += inputs[bike][i];
@@ -53,7 +54,11 @@ void calculateSpeed(int bike){
     speed[bike] /= (float)lInputs;
     speed[bike] = (1000.0/speed[bike])-1;
     speed[bike]*=speedMult[bike];
+    if(speed[bike]>lastSpeed + 0.003)speed[bike] = lastSpeed+0.003;
+    if (speed[bike] > 0) speed[bike]+=1;
     if (speed[bike] < 0) speed[bike] = 0;
+    if (speed[bike] > 10) speed[bike] = 10;
+   // 
 }
 }
 
@@ -93,6 +98,17 @@ void evaluateSerialInput(){
     case 'e':{ //enable fixed speed
       fixedSpeed[bike] = (bool)value;
       Serial.print("#fixedSpeed ");
+      Serial.print((int)value);
+      Serial.print(" -> ");
+      Serial.println((bool)value);
+      break;
+    }
+    case 'b':{ //enable fixed speed
+      fixedSpeed[0] = (bool)value;
+      fixedSpeed[1] = (bool)value;
+      speed[0] = 0;
+      speed[1] = 0;
+      Serial.print("#fixedSpeedBoth ");
       Serial.print((int)value);
       Serial.print(" -> ");
       Serial.println((bool)value);
@@ -139,13 +155,32 @@ void loop() {
 
   //serial input
   
-  while (Serial.available() > 0)
+  int serialInput = Serial.read();
+
+  if ( serialInput >= 0 )
   {
+    unsigned char serialByte = (unsigned char) serialInput;
+    
+    if ( serialByte == 'm' || serialByte == 's' || serialByte == 'e' || serialByte == 'b' )
+    {
+      serialBuffer[0] = serialByte;
+      serialBuffer[1] = Serial.read();
+      serialBuffer[2] = Serial.read();
+
+      evaluateSerialInput();
+      lastSequence[0] = millis();
+      lastSequence[1] = millis();
+    }
+  }
+
+  /*while (Serial.available() >= 0)
+  {
+    serialBuffer[0] =
     Serial.readBytes(serialBuffer, 3);
     evaluateSerialInput();
     lastSequence[0] = millis();
     lastSequence[1] = millis();
-  }
+  }*/
 
   //update bikes
   for(int i=0; i<nBikes;++i){

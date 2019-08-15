@@ -25,6 +25,13 @@ public:
 	ofJson toJson();
 };
 
+class ScreenConfig {
+public:
+	ofVec2f posTextP1;
+	ofVec2f posTextP2;
+	ofVec2f posTextInfo;
+};
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -37,6 +44,7 @@ class ofApp : public ofBaseApp{
 		void exit();
 
 		void drawBigScreen();
+		void drawBigScreen2();
 
 		void keyPressed(int key);
 		void keyReleased(int key);
@@ -91,11 +99,13 @@ private:
 	int winner = -1;
 
 	map<string,ofxPs3Eye> camsPlayer;
+	map<string, ofVideoGrabber> camsCar;
 
 	ofJson settings;
 	ofJson effectConfig;
 
 	//big screen
+	int currentConfig = 0;
 	ofTrueTypeFont fState;
 	ofTrueTypeFont fInfo;
 	ofTrueTypeFont fBig;
@@ -105,6 +115,7 @@ private:
 	ofFbo fboPrint1;
 	ofFbo fboPrint2;
 	ofFbo fboInterim;
+	vector<vector<ofFbo>> fbos;
 	//ofTexture picInterim;
 
 	//gui

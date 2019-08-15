@@ -17,8 +17,8 @@ void setup() {
   Serial.begin(9600);
   
   // Transmitter is connected to Arduino Pin #10  
-  mySwitch.setProtocol(5);
-  mySwitch.setRepeatTransmit(4);
+  mySwitch.setProtocol(2);
+  mySwitch.setRepeatTransmit(5);
   mySwitch.enableTransmit(10);
 
   pinMode(LED_BUILTIN, OUTPUT);
@@ -28,6 +28,13 @@ void assignByte( unsigned char inByte )
 {
   if(inByte < 128) serialBuffer[0] = inByte;
   else serialBuffer[1] = inByte-128;
+}
+
+int countOnes( uint16_t codeword )
+{
+  int numberOfOnes = 0;
+  for ( int i = 0; i < 16; i++ ) { numberOfOnes += bitRead( codeword, i ); }
+  return numberOfOnes;
 }
 
 void loop() {
@@ -45,6 +52,14 @@ void loop() {
   
     // codeword = speed1 | speed2
     uint16_t codeword = ( speedInt1 << 8 ) | speedInt2;
+
+    // compute parity bit for even parity
+    uint8_t parityBit = countOnes( codeword ) % 2;
+
+    // set parity bit twice for redundancy
+    codeword |= parityBit << 15;
+    codeword |= parityBit << 7;
+    
     mySwitch.send( codeword, 16 );
   
     //Serial.print("sent value: ");
