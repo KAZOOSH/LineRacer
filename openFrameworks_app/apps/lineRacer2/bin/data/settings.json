@@ -30,14 +30,38 @@
     "pos": [ 1920, 0 ],
     "dimension": [ 1920, 1080 ],
     "vMax": 50,
-    "configs": [
-      [
+    "screens": [
         {
-          "id": "player1",
-          "pos": [ 0, 100 ],
-          "dimension": [ 640, 480 ]
+          "id": "0fullScreen",
+          "pos": [ 0, 0 ],
+          "dimension": [ 1920, 1080 ]
+        },
+        {
+          "id": "1halfScreenLeft",
+          "pos": [ 0, 0 ],
+          "dimension": [ 960, 1080 ]
+        },
+        {
+          "id": "2halfScreenRight",
+          "pos": [ 960, 0 ],
+          "dimension": [ 960, 1080 ]
+        },
+        {
+          "id": "3picInPicLeft",
+          "pos": [ 100, 100 ],
+          "dimension": [ 320,240 ]
+        },
+        {
+          "id": "4picInPicRight",
+          "pos": [ 1500, 100 ],
+          "dimension": [ 320,240 ]
         }
-      ]
+    ],
+    "configs":[
+      ["","player1","player2"],
+      ["","player1","player2","car1","car2"],
+      ["","car1","car2","player1","player2"],
+      ["finish"]
     ]
   },
   "serial": {

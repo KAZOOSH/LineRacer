@@ -27,9 +27,8 @@ public:
 
 class ScreenConfig {
 public:
-	ofVec2f posTextP1;
-	ofVec2f posTextP2;
-	ofVec2f posTextInfo;
+	map<int, shared_ptr<ofxPs3Eye>> player;
+	map<int, shared_ptr<ofVideoGrabber>> car;
 };
 
 class ofApp : public ofBaseApp{
@@ -115,7 +114,8 @@ private:
 	ofFbo fboPrint1;
 	ofFbo fboPrint2;
 	ofFbo fboInterim;
-	vector<vector<ofFbo>> fbos;
+	vector<ofFbo> fbos;
+	vector<ScreenConfig> screenConfigs;
 	//ofTexture picInterim;
 
 	//gui

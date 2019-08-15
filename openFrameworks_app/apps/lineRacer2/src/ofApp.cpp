@@ -91,17 +91,25 @@ void ofApp::setup(){
 	sounds.insert(pair<string, ofSoundPlayer>("finish", ofSoundPlayer()));
 	sounds["finish"].load(settings["sound"]["finish"].get<string>());
 
-	////init fbos
-	//int maxCams = 0;
-	//for (auto& config:settings["bigScreen"]["configs"]){
-	//	if (config.size() > 0) {
-	//		vector<ofFbo> fboConfig;
-	//		
-	//		for (auto& settings : config) {
-	//			
-	//		}
-	//	}
-	//}
+	//load big screen fbos
+	for (auto& config:settings["bigScreen"]["screens"]){
+		fbos.push_back(ofFbo());
+		fbos.back().allocate(config["dimension"][0], config["dimension"][1]);
+	}
+	//generate big screen configs
+	for (auto& config : settings["bigScreen"]["configs"]) {
+		screenConfigs.push_back(ScreenConfig());
+		int count = 0;
+		for (auto& mapping : config) {
+			if (mapping == "player1") screenConfigs.back().player.insert(pair<int, shared_ptr<ofxPs3Eye>>(count, shared_ptr<ofxPs3Eye>(&camsPlayer["player1"])));
+			else if (mapping == "player2") screenConfigs.back().player.insert(pair<int, shared_ptr<ofxPs3Eye>>(count, shared_ptr<ofxPs3Eye>(&camsPlayer["player2"])));
+			else if (mapping == "finish") screenConfigs.back().player.insert(pair<int, shared_ptr<ofxPs3Eye>>(count, shared_ptr<ofxPs3Eye>(&camsPlayer["finish"])));
+			else if (mapping == "car1") screenConfigs.back().car.insert(pair<int, shared_ptr<ofVideoGrabber>>(count, shared_ptr<ofVideoGrabber>(&camsCar["car1"])));
+			else if (mapping == "car2") screenConfigs.back().car.insert(pair<int, shared_ptr<ofVideoGrabber>>(count, shared_ptr<ofVideoGrabber>(&camsCar["car2"])));
+			++count;
+		}
+		
+	}
 }
 
 //--------------------------------------------------------------
@@ -318,6 +326,7 @@ void ofApp::drawBigScreen()
 
 void ofApp::drawBigScreen2()
 {
+
 	ofVec2f pos = ofVec2f(settings["bigScreen"]["pos"][0], settings["bigScreen"]["pos"][1]);
 	ofVec2f dim = ofVec2f(settings["bigScreen"]["dimension"][0], settings["bigScreen"]["dimension"][1]);
 
