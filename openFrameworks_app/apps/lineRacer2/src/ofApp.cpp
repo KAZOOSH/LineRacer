@@ -93,8 +93,9 @@ void ofApp::setup(){
 
 	//load big screen fbos
 	for (auto& config:settings["bigScreen"]["screens"]){
-		fbos.push_back(ofFbo());
-		fbos.back().allocate(config["dimension"][0], config["dimension"][1]);
+		screens.push_back(Screen());
+		screens.back().fbo.allocate(config["dimension"][0], config["dimension"][1]);
+		screens.back().pos = ofVec2f(config["pos"][0], config["pos"][1]);
 	}
 	//generate big screen configs
 	for (auto& config : settings["bigScreen"]["configs"]) {
@@ -222,37 +223,34 @@ void ofApp::drawBigScreen()
 	ofVec2f pos = ofVec2f(settings["bigScreen"]["pos"][0], settings["bigScreen"]["pos"][1]);
 	ofVec2f dim = ofVec2f(settings["bigScreen"]["dimension"][0], settings["bigScreen"]["dimension"][1]);
 
-	ofRectangle camSource= ofRectangle(0, 0, 640,480);
-	ofRectangle camDist = ofRectangle(0, 0, dim.x / 2, dim.y);
-	camSource.scaleTo(camDist, OF_SCALEMODE_FILL);
+	//update the current fbos
+	vector<int> activeScreens;
+	for (size_t i = 0; i < screens.size(); i++){
+		if (currentConfig < screenConfigs.size()) {
+			if (screenConfigs[currentState].player.find(i) != screenConfigs[currentState].player.end()) {
+				screens[i].updateFbo(screenConfigs[currentState].player[i]);
+				activeScreens.push_back(i);
+			}else if (screenConfigs[currentState].car.find(i) != screenConfigs[currentState].car.end()) {
+				screens[i].updateFbo(screenConfigs[currentState].car[i]);
+				activeScreens.push_back(i);
+			}
+		}
+	}
+	ofSort(activeScreens);
 
-	ofRectangle finishSource = ofRectangle(0, 0, 640, 480);
-	ofRectangle finishDist = ofRectangle(0, 0, dim.x, dim.y);
-	finishSource.scaleTo(finishDist, OF_SCALEMODE_FILL);
-
-		ofPushMatrix();
-		ofTranslate(pos);
+	ofPushMatrix();
+	ofTranslate(pos);
+	for (auto& index:activeScreens)
+	{
+		screens[index].draw();
+	}
+	
 		switch (currentState) {
 		case IDLE:
 		{
-			if (camsPlayer.find("player1") != camsPlayer.end()) {
-				fboCam1.begin();
-				camsPlayer["player1"].getTexture().draw(camSource);
-				fboCam1.end();
-				fboCam1.draw(0, 0);
-			}
-			if (camsPlayer.find("player2") != camsPlayer.end()) {
-				fboCam2.begin();
-				camsPlayer["player2"].getTexture().draw(camSource);
-				fboCam2.end();
-				fboCam2.draw(dim.x / 2, 0);
-			}
-			break;
+
 		}
 		case WAIT: {
-			if (camsPlayer.find("finish") != camsPlayer.end()) {
-				camsPlayer["finish"].getTexture().draw(finishSource);
-			}
 			string countdown = ofToString((4100 -(ofGetElapsedTimeMillis() - lastStateChange)) / 1000);
 			fSuperBig.drawString(countdown, 0.5*(dim.x - fSuperBig.getStringBoundingBox(countdown, 0, 0).width), dim.y*0.7);
 			break;
@@ -260,26 +258,9 @@ void ofApp::drawBigScreen()
 		case RACE:
 		{
 			if (ofGetElapsedTimeMillis() - lastInterim < 4000) {
-				if (camsPlayer.find("finish") != camsPlayer.end()) {
-					fboInterim.begin();
-					camsPlayer["finish"].getTexture().draw(finishSource);
-					fboInterim.end();
-					fboInterim.draw(0, 0);
-				}
+
 			}
 			else {
-				if (camsPlayer.find("player1") != camsPlayer.end()) {
-					fboCam1.begin();
-					camsPlayer["player1"].getTexture().draw(camSource);
-					fboCam1.end();
-					fboCam1.draw(0, 0);
-				}
-				if (camsPlayer.find("player2") != camsPlayer.end()) {
-					fboCam2.begin();
-					camsPlayer["player2"].getTexture().draw(camSource);
-					fboCam2.end();
-					fboCam2.draw(dim.x / 2, 0);
-				}
 				string textP1 = ofToString(ofMap(bike1.speed, 0, 10, 0, settings["bigScreen"]["vMax"]), 0) + "km/h";
 				string textP2 = ofToString(ofMap(bike2.speed, 0, 10, 0, settings["bigScreen"]["vMax"]), 0) + "km/h";
 				fInfo.drawString(textP1, 30, 100);
@@ -313,8 +294,6 @@ void ofApp::drawBigScreen()
 		}
 			break;
 		case FINISH:
-			
-			fboInterim.draw(0, 0);
 			string tWin = bike1.name;
 			if(winner == 1)tWin = bike2.name;
 			tWin +=" gewinnt";
@@ -437,16 +416,16 @@ void ofApp::keyPressed(int key){
 	switch (key)
 	{
 	case '1':
-		bike1.setSpeed(0);
+		currentConfig = 0;
 		break;
 	case '2':
-		bike1.setSpeed(1);
+		currentConfig = 1;
 		break;
 	case '3':
-		bike1.setSpeed(2);
+		currentConfig = 2;
 		break;
 	case '4':
-		bike1.setSpeed(3);
+		currentConfig = 3;
 		break;
 	case '5':
 		bike1.setSpeed(4);
@@ -604,7 +583,7 @@ void ofApp::updateState()
 void ofApp::onSerialBuffer(const ofxIO::SerialBufferEventArgs & args)
 {
 	string msg = args.buffer().toString();
-	cout << msg.substr(1, 4) << "   " << msg.substr(6, 4) << endl;
+	//cout << msg.substr(1, 4) << "   " << msg.substr(6, 4) << endl;
 
 	switch (msg[0]) {
 	case 's': { //speed
@@ -829,4 +808,31 @@ ofJson PlayerStats::toJson()
 	ret["interims"] = times;
 
 	return ret;
+}
+
+void Screen::draw()
+{
+	fbo.draw(pos);
+}
+
+void Screen::updateFbo(shared_ptr<ofxPs3Eye> img)
+{
+	updateFbo(img->getTexture());
+}
+
+void Screen::updateFbo(shared_ptr<ofVideoGrabber> img)
+{
+	updateFbo(img->getTexture());
+}
+
+void Screen::updateFbo(ofTexture t)
+{
+	ofRectangle target = ofRectangle(0, 0, t.getWidth(), t.getHeight());
+	ofRectangle subject = ofRectangle(0, 0, fbo.getWidth(), fbo.getHeight());
+
+	subject.scaleTo(target, OF_SCALEMODE_FILL);
+
+	fbo.begin();
+	t.draw(target);
+	fbo.end();
 }

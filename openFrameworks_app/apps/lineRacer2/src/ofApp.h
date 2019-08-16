@@ -31,6 +31,18 @@ public:
 	map<int, shared_ptr<ofVideoGrabber>> car;
 };
 
+class Screen {
+public:
+	void draw();
+	void updateFbo(shared_ptr<ofxPs3Eye> img);
+	void updateFbo(shared_ptr<ofVideoGrabber> img);
+
+	void updateFbo(ofTexture t);
+	
+	ofFbo fbo;
+	ofVec2f pos;
+};
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -114,7 +126,8 @@ private:
 	ofFbo fboPrint1;
 	ofFbo fboPrint2;
 	ofFbo fboInterim;
-	vector<ofFbo> fbos;
+
+	vector<Screen> screens;
 	vector<ScreenConfig> screenConfigs;
 	//ofTexture picInterim;
 
