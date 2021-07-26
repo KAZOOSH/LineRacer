@@ -1,0 +1,66 @@
+{
+    "OmiCup": {
+        "serial": {
+            "bike": "USB VID:PID=2341:8036 ",
+            "finish": "USB VID:PID=1a86:7523 "
+        },
+        "print": {
+            "printer": "epson",
+            "text": {
+                "winner": {
+                    "title": "Gewonnen!",
+                    "second": "Deine Zeit:"
+                },
+                "looser": {
+                    "title": "Zweiter!",
+                    "second": "Vielleicht klappts",
+                    "third": "beim nächsten Mal."
+                }
+            }
+        },
+        "sound": {
+            "start": "sounds/Go.mp3",
+            "finish": "sounds/p2_win.mp3"
+        },
+        "gui": {
+            "size": [
+                1300,
+                700
+            ],
+            "player1": {
+                "pos": [
+                    0,
+                    400
+                ]
+            },
+            "player2": {
+                "pos": [
+                    340,
+                    400
+                ]
+            },
+            "finish": {
+                "pos": [
+                    600,
+                    400
+                ]
+            },
+            "cams": [
+                "opi player",
+                "omi player"
+            ]
+        }
+    },
+    "CamStream": {
+        "cams": [
+            {
+                "id": "opi player",
+                "device": "USB Camera-B4.09.24.1"
+            },
+            {
+                "id": "omi player",
+                "device": "USB Camera-B4.09.24.1"
+            }
+        ]
+    }
+}
